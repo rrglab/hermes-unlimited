@@ -69,10 +69,7 @@ class ScreenplayAdapter:
         build: Callable[..., DemoPackage] | None = None,
     ) -> None:
         self.config = config or AdapterConfig()
-        self.recorder = recorder or DemoRecorder(
-            default_width=self.config.default_width,
-            default_height=self.config.default_height,
-        )
+        self.recorder = recorder  # Optional: validation and preflight need no media backend.
         self.build = build if build is not None else build_demo_package
 
     # -- scenario construction -------------------------------------------
