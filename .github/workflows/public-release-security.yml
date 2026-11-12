@@ -1,0 +1,52 @@
+name: Public release security gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install security scanners
+        run: |
+          python -m pip install --disable-pip-version-check 'zizmor==1.22.0' 'ruff==0.14.3'
+      - name: Check workflow security
+        run: zizmor --min-severity high .github/workflows/
+      - name: Check Python syntax
+        run: ruff check --select E9,F63,F7,F82 .
+      - name: Check tracked files for credentials
+        run: |
+          python - <<'PY'
+          import pathlib, re, subprocess, sys
+          patterns = [
+              re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----'),
+              re.compile(rb'gh[pousr]_[A-Za-z0-9_]{30,}'),
+              re.compile(rb'github_pat_[A-Za-z0-9_]{30,}'),
+              re.compile(rb'AKIA[0-9A-Z]{16}'),
+          ]
+          files = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
+          findings = []
+          for raw in files:
+              if not raw: continue
+              path = pathlib.Path(raw.decode('utf-8', 'surrogateescape'))
+              if not path.is_file(): continue
+              data = path.read_bytes()
+              for pattern in patterns:
+                  if pattern.search(data):
+                      findings.append(str(path))
+                      break
+          if findings:
+              print('Potential credentials in tracked files:', *findings, sep='\n')
+              sys.exit(1)
+          print('No matching credential signatures in tracked files')
+          PY
