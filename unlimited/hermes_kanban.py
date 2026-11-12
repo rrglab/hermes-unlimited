@@ -62,11 +62,11 @@ class HermesKanban:
         if not isinstance(body, str) or len(body) > 8192:
             raise ValueError("TASK_BODY_INVALID")
         result = self._invoke([
-            "create", title.strip(), "--body", body,
+            "create", "--body=" + body,
             "--assignee", assignee, "--tenant", tenant,
             "--created-by", "hermes-unlimited", "--idempotency-key",
             f"{tenant}:{task_id}", "--max-runtime", str(self.max_runtime_seconds),
-            "--max-retries", str(self.max_retries), "--json"])
+            "--max-retries", str(self.max_retries), "--json", "--", title.strip()])
         if not isinstance(result, dict) or not result.get("id"):
             raise RuntimeError("TASK_CREATE_UNVERIFIED")
         return {"status": "TASK_QUEUED", "task_id": str(result["id"]),

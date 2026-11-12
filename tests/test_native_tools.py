@@ -48,6 +48,7 @@ class ToolIntegrationTests(unittest.TestCase):
         def register_tool(name, toolset, schema, handler):
             self.ctx.handlers[name] = handler
         self.ctx.register_tool = register_tool
+        self.ctx.get_config = lambda name, default="": settings.get(name, default)
         self.submissions = []
         self.kanban_unavailable = False
         outer = self
@@ -84,7 +85,8 @@ class ToolIntegrationTests(unittest.TestCase):
 
     def test_manifest_declares_all_registered_tools(self):
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
-        names = set(line.strip()[2:] for line in manifest.splitlines()
+        tools_section = manifest.split("provides_tools:", 1)[1].split("\nrequires_env:", 1)[0]
+        names = set(line.strip()[2:] for line in tools_section.splitlines()
                     if line.strip().startswith("- "))
         self.assertEqual(names, set(self.ctx.handlers),
                          "plugin.yaml must match registered tools exactly")
@@ -188,34 +190,9 @@ class ToolIntegrationTests(unittest.TestCase):
                               "tenant": "other"})
         self.assertEqual(response["reason"], "INVALID_ARGUMENTS")
 
-    def test_creative_render_and_owned_result(self):
-        class Store:
-            saved = set()
-            def record(self, tenant, identity, prompt_id):
-                self.saved.add((tenant, identity, prompt_id))
-            def owns(self, tenant, identity, prompt_id):
-                return (tenant, identity, prompt_id) in self.saved
-        class Client:
-            def __init__(self, origin):
-                self.origin = origin
-            def submit(self, workflow):
-                self.workflow = workflow
-                return {"prompt_id": "render-1"}
-            def result(self, prompt_id):
-                return {"prompt_id": prompt_id, "state": "completed", "outputs": {"1": {"images": []}}}
-        self.settings["HERMES_UNLIMITED_COMFYUI_URL"] = "http://127.0.0.1:8188"
-        self.ctx.comfyui_workflow_resolver = lambda name, prompt, **scope: {"1": {"class_type": "SaveImage", "inputs": {"text": prompt}}} if name == "image" else None
-        self.ctx.comfyui_job_store = Store()
-        self.ctx.comfyui_client_factory = Client
-        self.assertFalse(self.call("unlimited_creative_render", {"workflow": "other", "prompt": "Hi"})["ok"])
-        self.assertEqual(self.call("unlimited_creative_render", {"workflow": "image", "prompt": "A tree"})["state"], "submitted")
-        self.assertEqual(self.call("unlimited_creative_result", {"prompt_id": "render-1"})["state"], "completed")
-        self.assertFalse(self.call("unlimited_creative_result", {"prompt_id": "someone-else"})["ok"])
-        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@other"
-        self.assertFalse(self.call("unlimited_creative_render", {"workflow": "image", "prompt": "Hi"})["ok"])
-
-    def test_creative_requires_trusted_host_dependencies(self):
-        self.assertFalse(self.call("unlimited_creative_render", {"workflow": "image", "prompt": "Hi"})["ok"])
+    def test_unavailable_creative_backend_not_advertised(self):
+        self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
+        self.assertNotIn("unlimited_creative_result", self.ctx.handlers)
 
 
 if __name__ == "__main__":

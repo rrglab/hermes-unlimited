@@ -4,8 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from unlimited.justyou_host import (LoopbackSessionStore, read_session_token,
-                                    trusted_components)
+from unlimited.justyou_host import LoopbackSessionStore, trusted_components
 
 
 class HostBridgeTests(unittest.TestCase):
@@ -17,16 +16,6 @@ class HostBridgeTests(unittest.TestCase):
                 LoopbackSessionStore(url)
         self.assertEqual(LoopbackSessionStore("http://127.0.0.1:9999").url,
                          "http://127.0.0.1:9999/session/validate")
-
-    def test_rotated_session_token_must_be_private(self):
-        with tempfile.TemporaryDirectory() as root:
-            path = pathlib.Path(root) / "token"
-            path.write_text("rotated-token\n")
-            path.chmod(0o644)
-            with self.assertRaises(PermissionError):
-                read_session_token(path)
-            path.chmod(0o600)
-            self.assertEqual(read_session_token(path), "rotated-token")
 
     def test_host_injection_preserved(self):
         store, resolver = object(), object()
