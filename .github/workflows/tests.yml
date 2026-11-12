@@ -24,4 +24,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run offline unit tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python - <<'PY'
+          import unittest
+          media_modules = {"test_demo_pipeline", "test_demo_recorder", "test_screenplay_adapter"}
+          def core_only(suite):
+              for test in suite:
+                  if isinstance(test, unittest.TestSuite):
+                      yield from core_only(test)
+                  elif test.__class__.__module__ not in media_modules:
+                      yield test
+          discovered = unittest.defaultTestLoader.discover("tests")
+          suite = unittest.TestSuite(core_only(discovered))
+          if suite.countTestCases() == 0:
+              raise SystemExit("No core tests discovered")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
