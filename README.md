@@ -34,6 +34,11 @@ Create AI-native companies for yourself and your customers. Publish services. Re
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
+## Public source and planned migration
+
+The original [Hermes Agent hackathon catalog submission](https://github.com/NousResearch/hermes-agent/pull/153503) was submitted by `nsolland` and currently uses [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) as its public source. [`rrglab/hermes-unlimited`](https://github.com/rrglab/hermes-unlimited) is the public REHT Research Group mirror and the **intended future home**. Both repositories are kept in sync for the released plugin core during this transition. A future migration of the catalog source to `rrglab` will be coordinated explicitly, with a new verified commit pin; this statement is not a claim that the catalog has already migrated.
+
+
 ## What works
 
 - Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
