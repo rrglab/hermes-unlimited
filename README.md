@@ -1,5 +1,10 @@
 ![Hermes Unlimited — by REHT](assets/brand/github-banner.svg)
 
+[![Hermes Unlimited by REHT](assets/brand/hermes-unlimited-badge.svg)](https://valoresearch.org/hermes-unlimited/)
+[![Tests](https://github.com/rrglab/hermes-unlimited/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/rrglab/hermes-unlimited/actions/workflows/tests.yml)
+[![CodeQL](https://github.com/rrglab/hermes-unlimited/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/rrglab/hermes-unlimited/actions/workflows/codeql.yml)
+[![Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 <div align="center">
 
 **Don't hire another bot. Launch a company.**
