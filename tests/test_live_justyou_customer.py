@@ -1,9 +1,14 @@
 """Optional real JustYou acceptance; run with PYTHONPATH pointing to JustYou.
 
 The registry, challenge response, Ed25519 profile binding and plugin registry
-are real. Kanban is stubbed here; its native CLI is tested on the Hermes host.
+are real. By default Kanban is stubbed; an opt-in isolated Hermes-home mode
+uses the real native Kanban CLI without dispatching a model worker.
 """
 import importlib.util
+import os
+import subprocess
+import uuid
+from contextlib import nullcontext
 import json
 import pathlib
 import sys
@@ -74,13 +79,30 @@ class LiveCustomerAcceptance(unittest.TestCase):
                 token_file.write_text(session.token)
                 for file in (bindings, public_key, token_file):
                     file.chmod(0o600)
+                live_kanban = os.environ.get("HERMES_UNLIMITED_LIVE_KANBAN") == "1"
+                tenant = "synthetic-tenant-" + uuid.uuid4().hex[:8] if live_kanban else "synthetic-tenant"
+                hermes_cli = os.environ.get("HERMES_UNLIMITED_HERMES_CLI", "hermes")
+                if live_kanban:
+                    hermes_home = os.environ.get("HERMES_HOME")
+                    self.assertTrue(hermes_home, "isolated HERMES_HOME is mandatory")
+                    self.assertNotEqual(pathlib.Path(hermes_home).resolve(),
+                                        pathlib.Path.home() / ".hermes")
+                    self.assertTrue(pathlib.Path(hermes_home).is_dir())
+                    from unlimited.hermes_kanban import board_for
+                    board = board_for("synthetic-provider", tenant)
+                    prepared = subprocess.run(
+                        [hermes_cli, "kanban", "boards", "create", board],
+                        capture_output=True, text=True, timeout=45, check=False)
+                    self.assertEqual(prepared.returncode, 0,
+                                     prepared.stderr + prepared.stdout)
                 settings = {
                     "HERMES_UNLIMITED_PROVIDER_ID": "synthetic-provider",
-                    "HERMES_UNLIMITED_TENANT_ID": "synthetic-tenant",
+                    "HERMES_UNLIMITED_TENANT_ID": tenant,
+                    "HERMES_UNLIMITED_HERMES_CLI": hermes_cli,
                     "HERMES_UNLIMITED_JUSTYOU_IDENTITY": identity,
                     "HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL":
                         f"http://127.0.0.1:{server.server_port}",
-                    "HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN_FILE": str(token_file),
+                    "HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN": session.token,
                     "JUSTYOU_BINDINGS_FILE": str(bindings),
                     "JUSTYOU_AUTHORITY_KEY_ID": "test-authority",
                     "JUSTYOU_AUTHORITY_KEY_FILE": str(public_key),
@@ -88,6 +110,7 @@ class LiveCustomerAcceptance(unittest.TestCase):
                 }
                 secret = lambda name, default="": settings.get(name, default)
                 ctx = SimpleNamespace(profile_name="acceptancepublic1111", handlers={})
+                ctx.get_config = lambda name, default="": settings.get(name, default)
                 store, resolver, token = trusted_components(ctx, secret)
                 from unlimited.justyou import JustYouVerifier
                 evidence = JustYouVerifier(store, resolver, ctx.profile_name, token).verify()
@@ -112,8 +135,10 @@ class LiveCustomerAcceptance(unittest.TestCase):
                     "hermes_unlimited_live", pathlib.Path(__file__).resolve().parents[1] / "__init__.py")
                 plugin = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(plugin)
+                kanban_override = (nullcontext() if live_kanban else
+                                   patch("unlimited.hermes_kanban.HermesKanban", FakeKanban))
                 with patch.dict(sys.modules, {"agent": agent, "agent.secret_scope": scope}), \
-                     patch("unlimited.hermes_kanban.HermesKanban", FakeKanban):
+                     kanban_override:
                     plugin.register(ctx)
                     def call(name, params):
                         return json.loads(ctx.handlers[name](params))
@@ -125,11 +150,17 @@ class LiveCustomerAcceptance(unittest.TestCase):
                     result = call("unlimited_service_request", {
                         "company_id": "synthetic-company", "service_id": "brief",
                         "request_id": "synthetic-request", "payload": {"test": True}})
-                    self.assertEqual(result["task_id"], "synthetic-task-1")
-                    self.assertTrue(call("unlimited_service_result", {
-                        "company_id": "synthetic-company", "request_id": "synthetic-request"})["completed"])
-                    token_file.write_text("revoked-or-invalid")
-                    token_file.chmod(0o600)
+                    if live_kanban:
+                        self.assertTrue(result["task_id"].startswith("t_"), result)
+                        observed = call("unlimited_service_result", {
+                            "company_id": "synthetic-company", "request_id": "synthetic-request"})
+                        self.assertTrue(observed["found"], observed)
+                        self.assertFalse(observed["completed"], observed)
+                    else:
+                        self.assertEqual(result["task_id"], "synthetic-task-1")
+                        self.assertTrue(call("unlimited_service_result", {
+                            "company_id": "synthetic-company", "request_id": "synthetic-request"})["completed"])
+                    settings["HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN"] = "revoked-or-invalid"
                     self.assertFalse(call("unlimited_company_create", {
                         "company_id": "denied", "display_name": "Denied"})["ok"])
             finally:

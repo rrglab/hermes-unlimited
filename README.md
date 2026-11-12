@@ -36,7 +36,7 @@ A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for
 
 ## What works
 
-- Installable Hermes plugin with eleven native tools and no Hermes core override.
+- Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
 - Provider/tenant-scoped company and service registry backed by SQLite.
 - Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
 - JustYou session + signed Hermes profile binding verifier, with no token files bundled.
@@ -170,31 +170,29 @@ This is the **product direction**, not a statement that every capability above i
 - `unlimited_service_request`
 - `unlimited_company_task`
 - `unlimited_company_result`
-- `unlimited_creative_render`
-- `unlimited_creative_result`
+- `unlimited_a2ui_surface`
 
 ## Trusted profile setup
 
-The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_session_store`, `ctx.justyou_resolver`) or connects to the canonical JustYou service through a loopback-only session validator and signed profile-binding cache. It fails closed if either verification is unavailable. Hermes profile-scoped secrets must provide:
+The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_session_store`, `ctx.justyou_resolver`) or connects to a JustYou service through a loopback-only session validator and Ed25519-signed profile binding cache. It fails closed if either verification is unavailable. The required secret is `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN`, supplied through the host-scoped Hermes secret store. Configure the remaining non-secret values through the native Hermes plugin config:
 
 - `HERMES_UNLIMITED_PROVIDER_ID`
 - `HERMES_UNLIMITED_TENANT_ID`
 - `HERMES_UNLIMITED_JUSTYOU_IDENTITY`
-- `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN` or `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN_FILE` (private mode `0600`, reread on each operation)
 - `HERMES_UNLIMITED_REGISTRY_DB`
 - Optional `HERMES_UNLIMITED_HERMES_CLI`
 
-Without host injection, configure these additional profile-scoped values:
+Without host injection, configure these additional non-secret plugin settings:
 
 - `HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL` (`http://127.0.0.1:<port>` only)
 - `JUSTYOU_BINDINGS_FILE` (private, signed JustYou binding export)
 - `JUSTYOU_AUTHORITY_KEY_ID`
 - `JUSTYOU_AUTHORITY_KEY_FILE` (private, public verification key for Ed25519)
-- Optional `JUSTYOU_AUTHORITY_KIND` (defaults to `ed25519`; `hmac` only for explicitly configured prototype deployments)
+- Optional `JUSTYOU_AUTHORITY_KIND` (defaults to `ed25519`; other values are rejected)
 
-The JustYou canonical Python package (`protocol.authoritative_binding`) must be installed into the Hermes runtime. A bindings JSON file is a cache; every binding and version announcement is signature-verified, and every operation revalidates the active session. No JustYou material is bundled with this repository.
+The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; the plugin does not import an undeclared `protocol.authoritative_binding` package. `cryptography>=41,<47` is declared in `plugin.yaml`. A bindings JSON file is a cache, not authority; every binding and version announcement is signature-verified, and every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
 
-The session token is read from trusted Hermes profile scope or a private file maintained by the session renewer. Do not put credentials, customer data or keys in the plugin repository.
+The session token is read from the trusted Hermes profile secret store; a token-file fallback is not implemented. Do not put credentials, customer data or keys in the plugin repository.
 
 ## Tenant-isolated Kanban boards
 
@@ -223,8 +221,8 @@ customer effects, or production readiness. Dependabot checks action updates.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The core does not send mandatory telemetry. Hermes workers can contact model providers selected and paid for by the host. Optional creative rendering can contact the host-configured render backend; the ComfyUI client sends workflows to the configured ComfyUI server and reads outputs.
-- **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The host-provided JustYou verifier may read a signed binding export, a private session-token file and a public verification-key file outside plugin data; paths are explicit profile configuration, never discovered by scanning arbitrary files.
+- **Network:** The ten registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
+- **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
 - **Approvals:** No auto-approval, disabling of Hermes guards or core override. Missing authorization fails closed. The plugin may submit work only after trusted JustYou verification.

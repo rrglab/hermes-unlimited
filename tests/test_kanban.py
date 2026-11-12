@@ -25,6 +25,14 @@ class KanbanTests(unittest.TestCase):
         self.assertFalse(result["executed"])
         self.assertIn("--idempotency-key", self.calls[0])
 
+    def test_leading_dash_title_and_body_are_data_not_flags(self):
+        self.adapter.enqueue(tenant="tenant-a", assignee="role-a",
+                             task_id="request-2", title="-not-an-option",
+                             body="--malicious-flag", identity_evidence=self.evidence)
+        args = self.calls[0]
+        self.assertEqual(args[-2:], ["--", "-not-an-option"])
+        self.assertIn("--body=--malicious-flag", args)
+
     def test_requires_verified_identity(self):
         with self.assertRaises(PermissionError):
             self.adapter.enqueue(tenant="tenant-a", assignee="role-a",

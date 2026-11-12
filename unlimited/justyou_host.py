@@ -71,22 +71,13 @@ def _private_bytes(path):
     return data
 
 
-def read_session_token(path):
-    token = _private_bytes(path).decode("ascii").strip()
-    if not token or len(token) > 4096 or any(c.isspace() for c in token):
-        raise ValueError("SESSION_TOKEN_INVALID")
-    return token
-
-
 def load_resolver(bindings_path, authority_key_id, authority_key_file, authority_kind="ed25519"):
-    from protocol.authoritative_binding import (AuthorityBinding, Ed25519Authority,
-                                                HmacAuthority, VerifiedResolver,
+    from .authoritative_binding import (AuthorityBinding, Ed25519Authority,
+                                                VerifiedResolver,
                                                 VersionAnnouncement)
     material = _private_bytes(authority_key_file).strip()
     if authority_kind == "ed25519":
         authority = Ed25519Authority.verifier(authority_key_id, material.decode("ascii"))
-    elif authority_kind == "hmac":
-        authority = HmacAuthority(authority_key_id, material)
     else:
         raise ValueError("JUSTYOU_AUTHORITY_KIND_INVALID")
     resolver = VerifiedResolver([authority], source="justyou-authoritative")
@@ -119,9 +110,6 @@ def trusted_components(ctx, scoped_secret):
             store = LoopbackSessionStore(endpoint)
 
     token = getattr(ctx, "justyou_session_token", None)
-    token_file = scoped_secret("HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN_FILE", "")
-    if token is None and token_file:
-        token = read_session_token(token_file)
     if token is None:
         token = scoped_secret("HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN", "")
 

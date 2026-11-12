@@ -1,6 +1,6 @@
 name: hermes-unlimited
 kind: standalone
-version: 0.1.0-alpha.3
+version: 0.1.0-alpha.4
 description: Native Hermes public core for provider-operated AI-native companies
 requires_hermes: ">=0.21.5"
 provides_tools:
@@ -14,5 +14,22 @@ provides_tools:
   - unlimited_a2ui_surface
   - unlimited_service_dispatch
   - unlimited_service_result
-  - unlimited_creative_render
-  - unlimited_creative_result
+
+requires_env:
+  - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
+    description: Scoped JustYou session token; no default token is bundled
+    secret: true
+python_dependencies:
+  - "cryptography>=41,<47"
+config_schema:
+  HERMES_UNLIMITED_PROVIDER_ID: {type: str, default: "", description: "Provider identifier"}
+  HERMES_UNLIMITED_TENANT_ID: {type: str, default: "", description: "Tenant identifier"}
+  HERMES_UNLIMITED_JUSTYOU_IDENTITY: {type: str, default: "", description: "JustYou identity"}
+  HERMES_UNLIMITED_REGISTRY_DB: {type: str, default: "", description: "SQLite registry path"}
+  HERMES_UNLIMITED_HERMES_CLI: {type: str, default: "hermes", description: "Hermes CLI path"}
+  HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL: {type: str, default: "", description: "Loopback JustYou validator URL"}
+  JUSTYOU_BINDINGS_FILE: {type: str, default: "", description: "Private signed binding cache path"}
+  JUSTYOU_AUTHORITY_KEY_FILE: {type: str, default: "", description: "Public authority verifier key file"}
+  JUSTYOU_AUTHORITY_KEY_ID: {type: str, default: "", description: "Authority key identifier"}
+  JUSTYOU_AUTHORITY_KIND: {type: str, default: "ed25519", description: "Signature kind"}
+  HERMES_UNLIMITED_COMFYUI_URL: {type: str, default: "", description: "Optional creative backend URL, reserved for future release"}
