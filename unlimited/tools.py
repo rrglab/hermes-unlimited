@@ -34,6 +34,11 @@ SCHEMAS = (
             "additionalProperties": False},
     },
     {
+        "name": "unlimited_offer_catalog",
+        "description": "Discover provider offers; catalog entries do not imply readiness, billing or execution.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
+    },
+    {
         "name": "unlimited_company_list",
         "description": "List only companies in the bound provider and customer tenant.",
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -117,7 +122,10 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                                       response["task_id"], identity)
                     return {"request": request_id, "state": "running",
                             "task_id": response["task_id"], "executed": False}
-                if name == "unlimited_a2ui_surface":
+                if name == "unlimited_offer_catalog":
+                    from .offer_catalog import service_offer_catalog
+                    out = {"offers": service_offer_catalog()}
+                elif name == "unlimited_a2ui_surface":
                     from .a2ui_adapter import company_surface, request_surface
                     view = args["view"]
                     if view == "companies" and "company_id" not in args:
