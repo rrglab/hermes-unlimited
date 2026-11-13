@@ -79,7 +79,9 @@ QUANTITATIVE_UNIT_PATTERN = re.compile(
 
 WORD_TOKEN_PATTERN = re.compile(r"[a-z0-9_]{3,}", re.IGNORECASE)
 
-_DEFAULT_VERIFIER_SECRET = b"hermes-unlimited-independent-verifier-v2-key"
+# Ephemeral fallback for isolated offline tests. Never ship a shared signing key.
+# Production callers must inject host-custodied authority/key material.
+_DEFAULT_VERIFIER_SECRET = os.urandom(32)
 
 
 @dataclass(frozen=True)
@@ -439,7 +441,7 @@ class IndependentOutcomeVerifier:
         self,
         *,
         independent_critic: IndependentCriticCallable | None = None,
-        secret_key: bytes | str = _DEFAULT_VERIFIER_SECRET,
+        secret_key: bytes | str | None = None,
         authority: VerifierSigningAuthority | None = None,
     ) -> None:
         self.independent_critic = independent_critic
@@ -496,11 +498,11 @@ class IndependentOutcomeVerifier:
             return False
         if expected_objective_id is not None and receipt.objective_id != expected_objective_id:
             return False
-        if expected_tenant_id is not None and receipt.tenant_id and receipt.tenant_id != expected_tenant_id:
+        if expected_tenant_id is not None and receipt.tenant_id != expected_tenant_id:
             return False
-        if expected_company_id is not None and receipt.company_id and receipt.company_id != expected_company_id:
+        if expected_company_id is not None and receipt.company_id != expected_company_id:
             return False
-        if expected_policy_digest is not None and receipt.policy_digest and receipt.policy_digest != expected_policy_digest:
+        if expected_policy_digest is not None and receipt.policy_digest != expected_policy_digest:
             return False
         if deliverables is not None:
             actual_deliv_digest = hashlib.sha256(

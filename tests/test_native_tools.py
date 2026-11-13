@@ -101,6 +101,13 @@ class ToolIntegrationTests(unittest.TestCase):
             result = self.call(name, args)
             self.assertFalse(result["ok"])
             self.assertEqual(result["reason"], "RuntimeError")
+        # Even when a host worker exists, an independent host verifier is required.
+        self.ctx.mission_worker = lambda *_a: None
+        for name, args in (("unlimited_mission_run", mission),
+                           ("unlimited_company_cycle", cycle)):
+            result = self.call(name, args)
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["reason"], "RuntimeError")
         self.assertEqual(len(self.submissions), 0)
 
     def test_manifest_declares_all_registered_tools(self):

@@ -21,3 +21,5 @@ From a clean checkout run `python -m unittest discover -s tests -q` and `python 
 ## Native mission execution safety
 
 Native mission and Company OS cycle tools fail closed unless the trusted Hermes host supplies an explicit `authorize_mission(tenant, identity, company_id, objective_id)` callback. Offline deterministic fixture workers are not accepted as implicit real-world execution. The Company OS cycle additionally requires a host-supplied mission worker; live model routing is opt-in and remains unverified as a production service. The tests assert denial when these trusted host capabilities are absent.
+
+The trusted Hermes host must also inject an outcome verifier with an actual independent critic. An internal deterministic worker and an unconfigured self-verifier are insufficient for real tenant mission completion.

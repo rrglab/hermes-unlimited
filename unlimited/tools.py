@@ -412,7 +412,13 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                         "ledger_db_path": db_path,
                     }
                     if callable(worker_fn):
+                        trusted_verifier = getattr(ctx, "mission_verifier", None)
+                        if not isinstance(trusted_verifier, IndependentOutcomeVerifier) or not callable(
+                            trusted_verifier.independent_critic
+                        ):
+                            raise RuntimeError("HERMES_TRUSTED_OUTCOME_VERIFIER_REQUIRED")
                         engine_kwargs["worker"] = worker_fn
+                        engine_kwargs["verifier"] = trusted_verifier
                     elif scoped_secret("HERMES_UNLIMITED_LIVE_WORKER", "") == "1":
                         from .economics import LIVE_HERMES_MODEL_CATALOG, EconomicIntelligenceEngine
                         from .hermes_live_worker import HermesLiveIndependentCritic, HermesLiveWorkerAdapter
@@ -625,8 +631,14 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                         # No synthetic success or fabricated economic value in a
                         # real tenant's Company OS state.
                         raise RuntimeError("HERMES_TRUSTED_MISSION_WORKER_REQUIRED")
+                    from .autonomy import IndependentOutcomeVerifier
+                    trusted_verifier = getattr(ctx, "mission_verifier", None)
+                    if not isinstance(trusted_verifier, IndependentOutcomeVerifier) or not callable(
+                        trusted_verifier.independent_critic
+                    ):
+                        raise RuntimeError("HERMES_TRUSTED_OUTCOME_VERIFIER_REQUIRED")
                     os_kwargs = {"database": db_path, "verify_identity": verify,
-                                 "worker": worker_fn}
+                                 "worker": worker_fn, "verifier": trusted_verifier}
                     company_os = AutonomousCompanyOperatingSystem(**os_kwargs)
                     cycle_report = company_os.run_operating_cycle(
                         provider_id=provider,
