@@ -1471,10 +1471,11 @@ class AutonomousCompanyTests(unittest.TestCase):
 
     def test_25_openrouter_override_is_rejected(self) -> None:
         from unlimited.hermes_live_worker import HermesLiveWorkerAdapter
-        with self.assertRaisesRegex(ValueError, "OPENROUTER_NOT_ALLOWED_USE_NOUS_DIRECT"):
-            HermesLiveWorkerAdapter(
-                route_overrides={("step-1-triage", 1): ("openrouter", "openai/gpt-5.4-mini")}
-            )
+        with patch("unlimited.hermes_live_worker.ensure_hermes_runtime_loaded", return_value=ROOT):
+            with self.assertRaisesRegex(ValueError, "OPENROUTER_NOT_ALLOWED_USE_NOUS_DIRECT"):
+                HermesLiveWorkerAdapter(
+                    route_overrides={("step-1-triage", 1): ("openrouter", "openai/gpt-5.4-mini")}
+                )
 
 
     def test_26_live_adversarial_challenge_receipt_schema_is_complete(self) -> None:
@@ -1495,7 +1496,8 @@ class AutonomousCompanyTests(unittest.TestCase):
         from unlimited.hermes_live_worker import HermesLiveIndependentCritic, ProviderCircuitBreaker
 
         blocked = ProviderCircuitBreaker(excluded_providers=("gemini", "alibaba"))
-        critic = HermesLiveIndependentCritic(circuit_breaker=blocked)
+        with patch("unlimited.hermes_live_worker.ensure_hermes_runtime_loaded", return_value=ROOT):
+            critic = HermesLiveIndependentCritic(circuit_breaker=blocked)
         self.assertEqual(critic._candidate_critics("nous"), [])
         candidates = critic._candidate_critics("alibaba")
         self.assertTrue(candidates)

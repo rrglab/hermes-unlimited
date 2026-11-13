@@ -73,7 +73,7 @@ def _bounded_hermes_call(seconds: float):
             signal.setitimer(signal.ITIMER_REAL, remaining, previous_timer[1])
 
 
-DEFAULT_HERMES_AGENT_ROOT = Path("/home/njaal/.hermes/hermes-agent")
+DEFAULT_HERMES_AGENT_ROOT = Path.home() / ".hermes" / "hermes-agent"
 
 # Fallback mapping when a caller uses legacy synthetic model IDs with the live worker
 LEGACY_TO_LIVE_MODEL_MAP: Mapping[str, tuple[str, str]] = {
