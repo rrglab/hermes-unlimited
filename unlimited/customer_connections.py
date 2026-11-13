@@ -42,8 +42,13 @@ class CustomerConnectionRegistry:
             raise PermissionError("CUSTOMER_CONNECTION_AUTHORIZATION_REQUIRED")
         if provider not in ("smtp", "stripe"):
             raise ValueError("CUSTOMER_PROVIDER_UNSUPPORTED")
-        if not secret_ref.startswith("vault://") or len(secret_ref) < 10:
-            raise ValueError("CUSTOMER_SECRET_VAULT_REFERENCE_REQUIRED")
+        if not isinstance(secret_ref, str) or not secret_ref.startswith(f"vault://{tenant_id}/"):
+            raise PermissionError("CUSTOMER_TENANT_VAULT_REFERENCE_REQUIRED")
+        secret_path = secret_ref[len(f"vault://{tenant_id}/"):]
+        if not secret_path or len(secret_path) > 512 or any(
+            segment in ("", ".", "..") for segment in secret_path.split("/")
+        ) or "?" in secret_path or "#" in secret_path or "\\" in secret_path:
+            raise ValueError("CUSTOMER_SECRET_VAULT_REFERENCE_INVALID")
         allowed = {"smtp": {"host", "port", "sender"}, "stripe": {"account_label"}}[provider]
         if set(config) - allowed:
             raise ValueError("CUSTOMER_CONNECTION_CONFIG_UNEXPECTED_FIELD")

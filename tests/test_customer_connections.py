@@ -54,6 +54,19 @@ class CustomerConnectionTests(unittest.TestCase):
             self.assertFalse(receipt.externally_delivered)
             self.assertFalse(stripe.PaymentIntent.create.call_args.kwargs['confirm'])
 
+    def test_cross_tenant_and_ambiguous_vault_references_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            registry = CustomerConnectionRegistry(str(Path(folder) / "db"), lambda t, i: True)
+            for secret_ref in ("vault://other-tenant/key", "vault://tenant-a/",
+                               "vault://tenant-a/../other-key", "vault://tenant-a/key?secret=x"):
+                with self.assertRaises((PermissionError, ValueError)):
+                    registry.connect(tenant_id="tenant-a", identity="owner",
+                        connection_id="cross-scope", provider="stripe",
+                        secret_ref=secret_ref, config={}, authorized=True)
+            with self.assertRaises(LookupError):
+                registry.get(tenant_id="tenant-a", identity="owner",
+                             connection_id="cross-scope")
+
     def test_credentials_cannot_be_inserted_as_config(self):
         with tempfile.TemporaryDirectory() as folder:
             registry = CustomerConnectionRegistry(str(Path(folder)/'db'), lambda t,i: True)
