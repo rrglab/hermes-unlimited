@@ -91,6 +91,26 @@ class ToolIntegrationTests(unittest.TestCase):
         self.assertEqual(names, set(self.ctx.handlers),
                          "plugin.yaml must match registered tools exactly")
 
+    def test_via_offer_catalog_is_discoverable_but_not_sold_or_executed(self):
+        result = self.call("unlimited_offer_catalog")
+        via = next(item for item in result["offers"] if item["service_id"] == "via")
+        self.assertEqual(via["ui_owner"], "hermes_unlimited")
+        self.assertIn("distribution_channel", via["roles"])
+        self.assertFalse(via["customer_available"])
+        self.assertFalse(via["offerable"])
+        self.assertFalse(via["production_verified"])
+        self.assertIsNone(via["price"])
+        self.assertEqual(len(self.submissions), 0)
+        from unlimited.offer_catalog import service_offer_catalog
+        via["roles"].append("injected")
+        self.assertNotIn("injected", service_offer_catalog()[0]["roles"])
+
+    def test_via_catalog_does_not_bypass_justyou_or_accept_tenant_override(self):
+        self.assertEqual(self.call("unlimited_offer_catalog", {"tenant": "other"})["reason"],
+                         "INVALID_ARGUMENTS")
+        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@other"
+        self.assertFalse(self.call("unlimited_offer_catalog")["ok"])
+
     def test_public_company_service_request_path(self):
         created = self.call("unlimited_company_create",
                             {"company_id": "company-a", "display_name": "Research Firm"})
