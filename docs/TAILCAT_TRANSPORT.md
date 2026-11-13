@@ -1,50 +1,71 @@
-# Optional Tailcat transport (experimental)
+# JustYou endpoint transport using Tailcat (experimental)
 
-This is an opt-in adapter, **not** a replacement for Hermes orchestration,
-the host identity provider, Tailscale/Headscale network administration,
-HEIMEL policy, or REHT execution clearance.
+## Boundary
 
-## Scope
+**JustYou remains the stable principal address** (`@address`), whether the principal
+is a person, service, agent, machine or organization. It owns identity/continuity
+references, not transport, routing, execution or authorization.
 
-- `unlimited.tailcat_transport.TailcatTransport` invokes an **externally installed**
-  `tailcat` binary, without shell expansion.
-- Supports a connectivity probe (`ping`, optional direct-path requirement) and
-  a bounded request/reply stream (`exchange`).
-- No Hermes tools, A2UI controls, background daemons, network listeners,
-  or outbound operations are automatically enabled.
-- Tailcat peer addresses are bearer capabilities containing a pre-shared key.
-  Never place addresses in prompts, logs, public repos, telemetry, or URLs.
-- A successful tunnel or ping does **not** authorize any action or identify a tenant.
-  The calling host must independently verify identity, tenant, peer, permissible
-  service, and (for external effects) execution clearance.
-- Fail closed for missing CLI, invalid addresses, timeouts, and nonzero exits.
+**AI Bridge** owns resolution of a JustYou principal to one or more active
+provider/endpoint bindings, and chooses an approved transport. Tailcat is a
+replaceable connector that carries bytes between two already authorized peers.
+It must never be used as the principal identifier or an authorization grant.
 
-## Example (trusted operator context only)
-
-```python
-from unlimited.tailcat_transport import TailcatTransport
-transport = TailcatTransport(timeout_seconds=10)
-# address must arrive through a secret/out-of-band authenticated channel
-# available = transport.ping(address)
-# reply = transport.exchange(address, b"hello")
+```
+JustYou @principal
+   -> AI Bridge: authorized service and ephemeral endpoint binding
+   -> Tailcat: encrypted direct P2P or DERP fallback
+   -> trusted service: application identity check and tenant authorization
+   -> separately authorized external effect (if any)
 ```
 
-## Verification
+The current Python adapter implements only the **Tailcat transport**. Neither
+JustYou endpoint resolution nor an AI Bridge binding service is implemented by
+this PR. An actual protocol envelope, expiry, key rotation, replay defense,
+service discovery, and mutually authenticated peer binding still need design
+and independent implementation/testing. Do not treat the diagrams as complete.
+
+## Adapter
+
+`unlimited.tailcat_transport.TailcatTransport` invokes an externally installed
+Tailcat CLI. There is no automatic connection, registered Hermes tool, UI
+surface, background daemon, or host identity bypass.
+
+- `ping(address, require_direct=False)` tests reachability.
+- `exchange(address, port, payload, max_bytes=...)` connects to an explicit
+  TCP port on the remote Tailcat server, sends bytes, and receives a bounded
+  response. Stdout is spooled to a temporary file rather than buffered in
+  memory. Disk exhaustion remains a possible risk from an untrusted peer;
+  production use requires an output quota and process kill on overflow.
+- Only opaque `tc...` addresses are accepted. DNS-derived public addresses are
+  deliberately not supported.
+- Fail closed for missing executable, bad input, timeouts, and nonzero exits.
+
+## Security and deployment
+
+Tailcat addresses include a preshared bearer capability; never log, publish,
+put in prompts, or embed in public URLs. Sharing a Tailcat address is not proof
+of JustYou identity. For persistent peers use allowlisted client keys and
+independent service-level authentication. The published Tailcat threat model
+is experimental and not designed for hostile unrelated tenants.
+
+Public Tailcat DERP services keep metadata and are rate-limited with no SLA.
+For enterprise or defense deployments evaluate private DERP relays and
+offline/no-connectivity behavior. Tailcat cannot make an offline machine
+reachable without some available networking path.
+
+Transport fallback: prefer the host's existing, managed Tailscale/Headscale
+path for long-lived estate; use Tailcat only for bounded ephemeral sessions.
+No implicit fallback to unencrypted transport is allowed.
+
+## Tests and evidence
 
 ```sh
 python -m unittest tests.test_tailcat_transport -v
 ```
 
-The tests mock the executable and network; they do **not** establish live
-peer-to-peer, DERP fallback, latency, multi-tenant isolation, or production
-readiness. Before enabling the adapter for customer work, test actual binaries
-with two machines (direct and DERP fallback), enforce peer allowlists/short-lived
-keys, verify address redaction, and measure cancellation and output bounds.
-Subprocess stdout is currently checked **after** collection, so this prototype
-must not be used against an untrusted unlimited-output peer.
-
-## Decision record
-
-Maintain Tailscale/Headscale for persistent managed mesh. Evaluate Tailcat for
-ephemeral, narrowly-scoped connections. No new authorization semantics are
-introduced into REHT/VAIG/RACS/Veritas by this transport adapter.
+Tests mock `subprocess.run`, so they cannot prove real peer connectivity,
+DERP fallback, JustYou identity continuity, tenant isolation, live Hermes
+execution, cancellation, or production readiness. The server-side service
+is not implemented here. No native JustYou repo changes are required for the
+transport contract at this point.
