@@ -57,15 +57,35 @@ class ProviderStore:
                     state TEXT NOT NULL DEFAULT 'queued',
                     result TEXT,
                     task_id TEXT,
+                    attempts INTEGER NOT NULL DEFAULT 0,
                     created_at INTEGER NOT NULL,
                     PRIMARY KEY(provider, tenant, company, request),
                     FOREIGN KEY(provider, tenant, company, service)
                         REFERENCES services(provider, tenant, company, service)
                 );
+                CREATE TABLE IF NOT EXISTS missions (
+                    provider TEXT NOT NULL, tenant TEXT NOT NULL,
+                    company TEXT NOT NULL, objective TEXT NOT NULL,
+                    title TEXT NOT NULL, status TEXT NOT NULL,
+                    independently_verified INTEGER NOT NULL DEFAULT 0,
+                    target_value_minor INTEGER NOT NULL DEFAULT 0,
+                    verified_value_minor INTEGER NOT NULL DEFAULT 0,
+                    total_cost_minor REAL NOT NULL DEFAULT 0.0,
+                    net_value_minor REAL NOT NULL DEFAULT 0.0,
+                    routing_strategy TEXT NOT NULL DEFAULT 'outcome_driven',
+                    report_json TEXT NOT NULL,
+                    report_digest TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    PRIMARY KEY(provider, tenant, company, objective),
+                    FOREIGN KEY(provider, tenant, company)
+                        REFERENCES companies(provider, tenant, company)
+                );
             """)
             columns = {row[1] for row in db.execute("PRAGMA table_info(requests)")}
             if "task_id" not in columns:
                 db.execute("ALTER TABLE requests ADD COLUMN task_id TEXT")
+            if "attempts" not in columns:
+                db.execute("ALTER TABLE requests ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0")
 
     @staticmethod
     def _ids(*values):
@@ -147,14 +167,14 @@ class ProviderStore:
         self._ids(company, request)
         with self._db() as db:
             row = db.execute(
-                "SELECT service,payload,state,result,task_id FROM requests "
+                "SELECT service,payload,state,result,task_id,attempts FROM requests "
                 "WHERE provider=? AND tenant=? AND company=? AND request=?",
                 (provider, tenant, company, request)).fetchone()
         if row is None:
             return None
         return {"request": request, "service": row[0], "payload": json.loads(row[1]),
                 "state": row[2], "result": json.loads(row[3]) if row[3] else None,
-                "task_id": row[4]}
+                "task_id": row[4], "attempts": int(row[5] or 0)}
 
     def attach_task(self, provider, tenant, company, request, task_id, identity):
         self._authorize(provider, tenant, identity)
@@ -163,12 +183,40 @@ class ProviderStore:
             raise ValueError("TASK_ID_INVALID")
         with self._db() as db:
             updated = db.execute(
-                "UPDATE requests SET task_id=?,state='running' "
+                "UPDATE requests SET task_id=?,state='running',attempts=CASE WHEN attempts=0 THEN 1 ELSE attempts END "
                 "WHERE provider=? AND tenant=? AND company=? AND request=? "
                 "AND (task_id IS NULL OR task_id=?)",
                 (task_id, provider, tenant, company, request, task_id)).rowcount
         if updated != 1:
             raise ValueError("REQUEST_NOT_FOUND_OR_TASK_CONFLICT")
+
+    def recover_blocked_request(self, provider, tenant, company, request, new_task_id, identity, *, max_attempts=3):
+        self._authorize(provider, tenant, identity)
+        self._ids(company, request)
+        if not isinstance(new_task_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,128}", new_task_id):
+            raise ValueError("TASK_ID_INVALID")
+        with self._db() as db:
+            row = db.execute(
+                "SELECT state, task_id, attempts FROM requests "
+                "WHERE provider=? AND tenant=? AND company=? AND request=?",
+                (provider, tenant, company, request),
+            ).fetchone()
+            if row is None:
+                raise ValueError("REQUEST_NOT_FOUND")
+            state, old_task_id, attempts = row[0], row[1], int(row[2] or 1)
+            if state != "blocked":
+                raise ValueError("REQUEST_NOT_BLOCKED")
+            if attempts >= max_attempts:
+                raise ValueError("MAX_RECOVERY_ATTEMPTS_EXCEEDED")
+            if new_task_id == old_task_id:
+                raise ValueError("RECOVERY_REQUIRES_NEW_TASK_ID")
+            db.execute(
+                "UPDATE requests SET task_id=?,state='running',attempts=? "
+                "WHERE provider=? AND tenant=? AND company=? AND request=? AND state='blocked'",
+                (new_task_id, attempts + 1, provider, tenant, company, request),
+            )
+        return {"request": request, "state": "running", "task_id": new_task_id,
+                "previous_task_id": old_task_id, "attempts": attempts + 1, "recovered": True}
 
     def record_task_result(self, provider, tenant, company, request, task_id, result, identity):
         self._authorize(provider, tenant, identity)
@@ -186,3 +234,72 @@ class ProviderStore:
                 (status, serialized, provider, tenant, company, request, task_id)).rowcount
         if updated != 1:
             raise ValueError("REQUEST_TASK_MISMATCH")
+
+    def record_mission(self, provider, tenant, company, report_dict, identity):
+        self._authorize(provider, tenant, identity)
+        self._ids(company)
+        if not isinstance(report_dict, dict):
+            raise ValueError("MISSION_REPORT_INVALID")
+        objective = report_dict.get("objective_id", "")
+        self._ids(objective)
+        if report_dict.get("tenant_id") != tenant or report_dict.get("company_id") != company:
+            raise PermissionError("MISSION_SCOPE_MISMATCH")
+        serialized = json.dumps(report_dict, separators=(",", ":"), default=str)
+        with self._db() as db:
+            db.execute(
+                "INSERT OR REPLACE INTO missions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    provider,
+                    tenant,
+                    company,
+                    objective,
+                    str(report_dict.get("title", objective))[:160],
+                    str(report_dict.get("status", "UNKNOWN")),
+                    1 if report_dict.get("independently_verified") is True else 0,
+                    int(report_dict.get("target_value_minor", 0)),
+                    int(report_dict.get("verified_value_minor", 0)),
+                    float(report_dict.get("total_economic_cost_minor", 0.0)),
+                    float(report_dict.get("net_economic_value_minor", 0.0)),
+                    str(report_dict.get("routing_strategy", "outcome_driven")),
+                    serialized,
+                    str(report_dict.get("report_digest", "")),
+                    int(time.time()),
+                ),
+            )
+        return {"objective_id": objective, "recorded": True}
+
+    def list_missions(self, provider, tenant, company, identity):
+        self._authorize(provider, tenant, identity)
+        self._ids(company)
+        with self._db() as db:
+            rows = db.execute(
+                "SELECT objective, status, independently_verified, verified_value_minor, "
+                "total_cost_minor, net_value_minor, routing_strategy, report_digest "
+                "FROM missions WHERE provider=? AND tenant=? AND company=? ORDER BY created_at, objective",
+                (provider, tenant, company),
+            ).fetchall()
+        return [
+            {
+                "objective": r[0],
+                "status": r[1],
+                "independently_verified": bool(r[2]),
+                "verified_value_minor": int(r[3]),
+                "total_cost_minor": float(r[4]),
+                "net_value_minor": float(r[5]),
+                "routing_strategy": r[6],
+                "report_digest": r[7],
+            }
+            for r in rows
+        ]
+
+    def get_mission(self, provider, tenant, company, objective, identity):
+        self._authorize(provider, tenant, identity)
+        self._ids(company, objective)
+        with self._db() as db:
+            row = db.execute(
+                "SELECT report_json FROM missions WHERE provider=? AND tenant=? AND company=? AND objective=?",
+                (provider, tenant, company, objective),
+            ).fetchone()
+        if row is None:
+            return None
+        return json.loads(row[0])

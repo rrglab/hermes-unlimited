@@ -146,6 +146,50 @@ def request_surface(store, provider, tenant, company, identity, *, surface_id):
     }})
 
 
+def mission_surface(store, provider, tenant, company, identity, *, surface_id):
+    """Read authorized autonomous missions and economic EV summaries for one company."""
+    sid = _surface_id(surface_id)
+    missions = store.list_missions(provider, tenant, company, identity)
+    if not isinstance(missions, list) or len(missions) > 100:
+        raise A2UIValidationError("INVALID_MISSION_LIST")
+    nodes = [{"id": "root", "component": "Column", "children": ["heading"]}]
+    nodes.append(_text("heading", "Captain's Bridge · Autonomous Missions & EV"))
+    for i, m in enumerate(missions):
+        if not isinstance(m, dict) or not isinstance(m.get("objective"), str) or not isinstance(m.get("status"), str):
+            raise A2UIValidationError("INVALID_MISSION")
+        node_id = f"mission_{i}"
+        nodes[0]["children"].append(node_id)
+        verified_tag = "VERIFIED" if m.get("independently_verified") else "UNVERIFIED"
+        net_val = m.get("net_value_minor", 0.0)
+        nodes.append(_text(
+            node_id,
+            f"{m['objective']} · {m['status']} · {verified_tag} · net_ev={net_val:.1f}",
+        ))
+    return validate_envelope({"version": "1.0", "createSurface": {
+        "surfaceId": sid, "catalogId": BASIC_CATALOG, "sendDataModel": False,
+        "components": nodes, "dataModel": {},
+    }})
+
+
+def readiness_surface(store, provider, tenant, identity, *, surface_id):
+    """Read-only A2UI 1.0 Captain's Bridge surface displaying the 15-area Product Readiness Matrix."""
+    from .company_os import PRODUCT_READINESS_MATRIX
+
+    sid = _surface_id(surface_id)
+    # Enforce tenant & JustYou authorization via ProviderStore before exporting any UI surface
+    store.list_companies(provider, tenant, identity)
+    nodes = [{"id": "root", "component": "Column", "children": ["heading"]}]
+    nodes.append(_text("heading", "Captain's Bridge · 15-Area Product Readiness Matrix"))
+    for i, item in enumerate(PRODUCT_READINESS_MATRIX):
+        node_id = f"area_{i}"
+        nodes[0]["children"].append(node_id)
+        nodes.append(_text(node_id, f"{item['area']} · {item['status']}"))
+    return validate_envelope({"version": "1.0", "createSurface": {
+        "surfaceId": sid, "catalogId": BASIC_CATALOG, "sendDataModel": False,
+        "components": nodes, "dataModel": {},
+    }})
+
+
 def delete_surface(surface_id):
     return validate_envelope({"version": "1.0", "deleteSurface": {"surfaceId": _surface_id(surface_id)}})
 

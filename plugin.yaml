@@ -14,6 +14,13 @@ provides_tools:
   - unlimited_a2ui_surface
   - unlimited_service_dispatch
   - unlimited_service_result
+  - unlimited_connection_manage
+  - unlimited_mission_run
+  - unlimited_economic_evaluate
+  - unlimited_memory_recall
+  - unlimited_service_factory
+  - unlimited_socratic_council
+  - unlimited_company_cycle
 
 requires_env:
   - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
