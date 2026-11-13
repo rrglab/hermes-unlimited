@@ -41,10 +41,11 @@ The original [Hermes Agent hackathon catalog submission](https://github.com/Nous
 
 ## What works
 
-- Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
+- Installable Hermes alpha.5 plugin with ten native tools and no Hermes core override.
 - Provider/tenant-scoped company and service registry backed by SQLite.
 - Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
 - JustYou session + signed Hermes profile binding verifier, with no token files bundled.
+- Optional receive-only JustYou Inbound FrontDoor bridge for verified sender-to-recipient messages; a trusted channel adapter and delivery sink must be supplied by the host.
 - Native Hermes Kanban task submission and scoped state reader, including request-to-task result association.
 - Fail-closed checks for missing identity, mismatched profile, tenant boundaries and duplicate request IDs.
 
@@ -198,6 +199,14 @@ Without host injection, configure these additional non-secret plugin settings:
 The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; the plugin does not import an undeclared `protocol.authoritative_binding` package. `cryptography>=41,<47` is declared in `plugin.yaml`. A bindings JSON file is a cache, not authority; every binding and version announcement is signature-verified, and every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
 
 The session token is read from the trusted Hermes profile secret store; a token-file fallback is not implemented. Do not put credentials, customer data or keys in the plugin repository.
+
+## JustYou inbound bridge (alpha.5, optional)
+
+`unlimited.justyou_inbound.JustYouInboundBridge` accepts a **host-provided** canonical JustYou `InboundFrontDoor` and a trusted delivery callback. The host must authenticate the external channel before constructing a `VerifiedOrigin`. The bridge never creates trusted origins, executes models or grants authority. It forwards the verified sender, recipient, message ID, proof reference and message text to the supplied callback, rejecting unknown addresses and conflicting replays through the canonical frontdoor. Duplicate messages are not delivered twice within the lifetime of the bridge instance.
+
+This is a **receive-only integration primitive**, not a new registered Hermes tool and not a production messaging adapter. There is no durable inbox/outbox, crash-safe deduplication, or external provider authentication included. The private JustYou implementation is not bundled. Hosts must supply an independently installed, compatible JustYou implementation.
+
+**Verified DEV source:** `nsolland/hermes-unlimited-dev` commit `4cd5e49705600d320b510d01a9a73ce4f4e4be94`; JustYou PR #126 (merged) and security context PR #127 (merged). The private DEV acceptance used a signed JustYou session and real Hermes Kanban in an isolated local environment: 2 live tests passed; 107 regression tests passed, 9 skipped. External provider and model dispatch were not exercised.
 
 ## Tenant-isolated Kanban boards
 
