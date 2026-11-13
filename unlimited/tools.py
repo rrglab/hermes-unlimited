@@ -397,6 +397,15 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                         identity=identity, verified_only=True, limit=5,
                     )
                     worker_fn = getattr(ctx, "mission_worker", None)
+                    approve_mission = getattr(ctx, "authorize_mission", None)
+                    if not callable(approve_mission) or approve_mission(
+                        tenant, identity, company_id, objective.objective_id
+                    ) is not True:
+                        raise PermissionError("HERMES_MISSION_APPROVAL_REQUIRED")
+                    if not callable(worker_fn) and scoped_secret("HERMES_UNLIMITED_LIVE_WORKER", "") != "1":
+                        # Deterministic fixture output must never be exposed as a
+                        # verified real-world mission through the native Hermes tool.
+                        raise RuntimeError("HERMES_TRUSTED_MISSION_WORKER_REQUIRED")
                     engine_kwargs = {
                         "verify_identity": verify,
                         "routing_strategy": strategy,
@@ -607,9 +616,17 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                             )
                         )
                     worker_fn = getattr(ctx, "mission_worker", None)
-                    os_kwargs = {"database": db_path, "verify_identity": verify}
-                    if callable(worker_fn):
-                        os_kwargs["worker"] = worker_fn
+                    approve_mission = getattr(ctx, "authorize_mission", None)
+                    if not callable(approve_mission) or approve_mission(
+                        tenant, identity, company_id, "company-cycle"
+                    ) is not True:
+                        raise PermissionError("HERMES_MISSION_APPROVAL_REQUIRED")
+                    if not callable(worker_fn):
+                        # No synthetic success or fabricated economic value in a
+                        # real tenant's Company OS state.
+                        raise RuntimeError("HERMES_TRUSTED_MISSION_WORKER_REQUIRED")
+                    os_kwargs = {"database": db_path, "verify_identity": verify,
+                                 "worker": worker_fn}
                     company_os = AutonomousCompanyOperatingSystem(**os_kwargs)
                     cycle_report = company_os.run_operating_cycle(
                         provider_id=provider,

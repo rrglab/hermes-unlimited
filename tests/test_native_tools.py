@@ -83,6 +83,26 @@ class ToolIntegrationTests(unittest.TestCase):
     def call(self, tool, args=None):
         return json.loads(self.ctx.handlers[tool](args or {}))
 
+    def test_autonomous_tool_requires_host_authorization_and_real_worker(self):
+        self.call("unlimited_company_create", {"company_id": "company-a", "display_name": "A"})
+        mission = {"company_id": "company-a", "objective_id": "mission-1",
+                   "title": "Real customer outcome", "target_value_minor": 5000}
+        cycle = {"company_id": "company-a", "strategic_direction": "deliver",
+                 "candidates": [{"objective_id": "mission-1", "title": "Real outcome",
+                                 "target_value_minor": 5000}]}
+        for name, args in (("unlimited_mission_run", mission),
+                           ("unlimited_company_cycle", cycle)):
+            result = self.call(name, args)
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["reason"], "PermissionError")
+        self.ctx.authorize_mission = lambda *args: True
+        for name, args in (("unlimited_mission_run", mission),
+                           ("unlimited_company_cycle", cycle)):
+            result = self.call(name, args)
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["reason"], "RuntimeError")
+        self.assertEqual(len(self.submissions), 0)
+
     def test_manifest_declares_all_registered_tools(self):
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
         tools_section = manifest.split("provides_tools:", 1)[1].split("\nrequires_env:", 1)[0]
