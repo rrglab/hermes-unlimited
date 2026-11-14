@@ -24,7 +24,7 @@ class HermesCouncilTests(unittest.TestCase):
         seen = []
         def fake_runner(args, **kwargs):
             seen.append((args, kwargs))
-            return CompletedProcess(args, 0, "Factual analysis", "")
+            return CompletedProcess(args, 0, 'Session: local-test\n'+json.dumps({"type": "result", "exit_code": 0, "text": "Factual analysis"})+'\n', "")
         result = _invoke("hermes", SEATS["skeptic"], "Strict review", "case text",
                          runner=fake_runner)
         self.assertEqual(result, "Factual analysis")
@@ -57,11 +57,11 @@ class HermesCouncilTests(unittest.TestCase):
             prompt = kwargs["input"]
             seen.append((model, prompt))
             if model.endswith("chair"):
-                return CompletedProcess(args, 0, json.dumps({
+                return CompletedProcess(args, 0, json.dumps({"type": "result", "exit_code": 0, "text": json.dumps({
                     "status": "DISSENT", "synthesis": "Evidence insufficient for unconditional go",
                     "dissent": ["Unknown effect size"], "uncertainty": ["Missing base rates"]
-                }), "")
-            return CompletedProcess(args, 0, "Model evaluation of the stated evidence", "")
+                })}), "")
+            return CompletedProcess(args, 0, json.dumps({"type": "result", "exit_code": 0, "text": "Model evaluation of the stated evidence"}), "")
         class Ctx: pass
         callables = configure_council(
             Ctx(), lambda name, default="": json.dumps(SEATS) if name.endswith("COUNCIL_MODELS") else default,
@@ -80,3 +80,39 @@ class HermesCouncilTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_session_metadata_never_contaminates_final_text():
+    def fake(args, **kwargs):
+        return CompletedProcess(args, 0, "Session: irrelevant\n" + json.dumps({"type": "result", "exit_code": 0, "text": "Answer"}) + "\n", "")
+    assert _invoke("hermes", SEATS["chair"], "sys", "case", runner=fake) == "Answer"
+
+def test_no_terminal_result_fails_closed():
+    def fake(args, **kwargs):
+        return CompletedProcess(args, 0, json.dumps({"type": "text", "text": "Not final"}), "")
+    with unittest.TestCase().assertRaisesRegex(CouncilUnavailable, "COUNCIL_RESULT_UNAVAILABLE"):
+        _invoke("hermes", SEATS["chair"], "sys", "case", runner=fake)
+
+
+def test_council_limits_parallel_hermes_processes():
+    import threading
+    import time
+    active = 0
+    peak = 0
+    lock = threading.Lock()
+    def fake(args, **kwargs):
+        nonlocal active, peak
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        time.sleep(.012)
+        with lock:
+            active -= 1
+        return CompletedProcess(args, 0, json.dumps({"type": "result", "exit_code": 0, "text": "Opinion"}), "")
+    class Host: pass
+    seats = configure_council(Host(), lambda k,d='': json.dumps(SEATS) if k.endswith('COUNCIL_MODELS') else d, runner=fake)
+    members, chair = seats
+    async def check():
+        await asyncio.gather(*(members[role]('system', 'case') for role in members))
+    asyncio.run(check())
+    assert peak == 1
