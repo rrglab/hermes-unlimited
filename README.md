@@ -47,6 +47,10 @@ A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for
 
 The [original hackathon catalog PR #153503](https://github.com/NousResearch/hermes-agent/pull/153503) merged on 13 November 2026 and remains pinned to `nsolland` alpha.4. [PR #155722](https://github.com/NousResearch/hermes-agent/pull/155722) proposes migrating the **existing** catalog entry to `rrglab` alpha.6 (17 tools, three hooks). Alpha.7 is a subsequent public-source release candidate with two additional adapter tools; it is **not** part of PR #155722. Catalog availability changes only after an independently reviewed and merged SHA-bump PR. Do not equate public GitHub source availability with catalog installation.
 
+### Experimental Tool → Agent pipeline (public source)
+
+A source-only, standalone [Tool → Capability → Junior Agent library](docs/TOOL_TO_AGENT_PIPELINE.md) is included for testing and community contributions. It normalizes Hermes/MCP/connector/OpenAPI tool definitions, generates one-tool draft Junior profiles, suggests test contracts, and detects contract changes through optional tenant-scoped SQLite fingerprints. It **does not install agents, connect accounts, choose models, or grant tool permissions**. This library is not registered as a new Hermes plugin tool in the current alpha; the tool count and catalog pin below are unchanged.
+
 ### What is implemented in the public core
 
 - **Company OS / Mission Engine:** company charters, goal alignment, objective decomposition, scoped mission processing, retry and recovery controls. Hermes native mission execution requires explicit trusted-host authorization and a non-fixture worker; it fails closed without them.
