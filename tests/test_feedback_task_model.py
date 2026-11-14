@@ -11,7 +11,7 @@ from feedback_task_model.feedback import (
 
 NOW = datetime(2026, 11, 14, 13, 0, tzinfo=timezone.utc)
 TRIAL = {"task_family": "file_lookup", "model": "nous/solar-mini:free",
-         "verified": True, "success": True, "latency_ms": 2200,
+         "verified": True, "success": True, "completed": True, "latency_ms": 2200,
          "cost_usd": 0.0001, "input_tokens": 50, "output_tokens": 5}
 
 

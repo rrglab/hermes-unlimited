@@ -22,7 +22,7 @@ FAMILIES = frozenset({"file_lookup", "email_read", "email_draft", "dns_lookup",
                       "code_review", "test_execution", "general", "other"})
 MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/+\-]{0,95}$")
 ALLOWED = frozenset({"task_family", "model", "verified", "success",
-                     "latency_ms", "cost_usd", "input_tokens", "output_tokens"})
+                     "latency_ms", "cost_usd", "input_tokens", "output_tokens", "completed"})
 DEFAULT_HOME = Path.home() / ".hermes" / "feedback_task_model"
 
 
@@ -49,16 +49,19 @@ def validate_trial(raw: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("INVALID_TASK_FAMILY_OR_MODEL")
     if type(raw["verified"]) is not bool or type(raw["success"]) is not bool:
         raise ValueError("BOOLEAN_REQUIRED")
-    if raw["success"] and not raw["verified"]:
-        raise ValueError("SUCCESS_REQUIRES_VERIFIED_RESULT")
+    if type(raw["completed"]) is not bool:
+        raise ValueError("COMPLETION_BOOLEAN_REQUIRED")
+    if raw["success"] and (not raw["verified"] or not raw["completed"]):
+        raise ValueError("SUCCESS_REQUIRES_VERIFIED_COMPLETED_RESULT")
     import math
-    for key in ("latency_ms", "cost_usd"):
-        if not isinstance(raw[key], (int, float)) or isinstance(raw[key], bool) or not math.isfinite(raw[key]) or raw[key] < 0:
-            raise ValueError("INVALID_NONNEGATIVE_MEASUREMENT")
+    if not isinstance(raw["latency_ms"], (int, float)) or isinstance(raw["latency_ms"], bool) or not math.isfinite(raw["latency_ms"]) or raw["latency_ms"] < 0:
+        raise ValueError("INVALID_NONNEGATIVE_MEASUREMENT")
+    if raw["cost_usd"] is not None and (not isinstance(raw["cost_usd"], (int, float)) or isinstance(raw["cost_usd"], bool) or not math.isfinite(raw["cost_usd"]) or raw["cost_usd"] < 0):
+        raise ValueError("INVALID_NONNEGATIVE_COST")
     for key in ("input_tokens", "output_tokens"):
         if type(raw[key]) is not int or raw[key] < 0:
             raise ValueError("INVALID_TOKEN_COUNT")
-    if raw["latency_ms"] > 86_400_000 or raw["cost_usd"] > 100000 or raw["input_tokens"] > 100000000 or raw["output_tokens"] > 100000000:
+    if raw["latency_ms"] > 86_400_000 or (raw["cost_usd"] is not None and raw["cost_usd"] > 100000) or raw["input_tokens"] > 100000000 or raw["output_tokens"] > 100000000:
         raise ValueError("MEASUREMENT_OUT_OF_RANGE")
     return dict(raw)
 
@@ -123,9 +126,11 @@ def build_batch(data_dir: Path, *, start: datetime, end: datetime, min_group: in
             continue
         verified = [r for r in rows if r["verified"]]
         result.append({"task_family": family, "model": model, "samples": len(rows),
+                       "completed_samples": sum(r["completed"] for r in rows),
                        "verified_samples": len(verified), "verified_successes": sum(r["success"] for r in verified),
                        "mean_latency_ms": round(sum(r["latency_ms"] for r in rows) / len(rows)),
-                       "mean_cost_usd_estimate": round(sum(r["cost_usd"] for r in rows) / len(rows), 6),
+                       "mean_cost_usd_estimate": (round(sum(r["cost_usd"] for r in rows) / len(rows), 6)
+                                                  if all(r["cost_usd"] is not None for r in rows) else None),
                        "total_input_tokens": sum(r["input_tokens"] for r in rows),
                        "total_output_tokens": sum(r["output_tokens"] for r in rows)})
     return {"schema_version": SCHEMA_VERSION, "window_start": _stamp(start),
