@@ -25,6 +25,14 @@ The proposed scheduler invokes `python3 -m feedback_task_model.feedback publish`
 
 ## Receiver / prerequisite
 
-Target: `rrglab/hermes-unlimited` on GitHub. Publisher uses GitHub Issues, never write access to the repository or PRs containing event logs. **As of 14 Nov 2026, Issues were reported disabled in the target repository.** The publisher returns `NOT_SENT_TARGET_ISSUES_DISABLED` until the repository owner enables Issues. Users also need GitHub CLI `gh` authentication with permission to create issues. No public data is transmitted merely by installing this package. No bypass of receiver configuration is attempted.
+Target: `rrglab/hermes-unlimited` on GitHub. Publisher uses GitHub Issues, never write access to the repository or PRs containing event logs. **On 14 Nov 2026, Issues were confirmed enabled on the target repository.** The publisher still checks this before every submission and fails closed if it changes. Users also need GitHub CLI `gh` authentication with permission to create issues. No public data is transmitted merely by installing this package. No bypass of receiver configuration is attempted.
 
 The protocol must not be used for covert analytics. Public feedback can be untruthful or gamed; it is not equivalent to independent benchmark certification. Published issues are visible with the GitHub identity of the posting account, even though aggregate payloads omit identities. Users should explicitly understand this before consent.
+
+## Separate feedback-only Hermes plugin
+
+`feedback_task_model/` is also a minimal standalone native Hermes plugin (`plugin.yaml`, `register(ctx)`). This allows an operator to add feedback observers without replacing an older, customized Hermes Unlimited runtime plugin. The sidecar uses only Hermes lifecycle callbacks, not provider credentials or tool overrides.
+
+For an explicitly managed local deployment, copy the files of this folder into `~/.hermes/plugins/hermes-community-feedback/`, then use `hermes plugins enable hermes-community-feedback --no-allow-tool-override`. Verify with `hermes plugins show hermes-community-feedback`. The gateway reloads the observers when enabled. The local opt-in and 12-hour cron publisher are separate, persistent configuration.
+
+**Do not enable the sidecar alongside a newer Hermes Unlimited plugin already registering `feedback_task_model.hermes_hooks`: both would observe the same turns and produce duplicate data.** Disable the sidecar before upgrading to such a version. No existing runtime plugin needs to be replaced for the sidecar to work.
