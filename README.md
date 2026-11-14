@@ -40,7 +40,7 @@ Hermes Unlimited builds on **Hermes Agent**, the open-source agent runtime from 
 
 | Term | Meaning in this project |
 | --- | --- |
-| **AGY** | Project identifier for the **Autonomous Company Engine**: the Hermes Unlimited company, mission, memory, economics, and service-production core. “AGY” is a codename, not a letter-by-letter initialism. |
+| **AGY** | **Autonomous Goal Engine**: goal-oriented orchestration that turns objectives into bounded missions, coordinates execution, tracks progress, and learns from verified outcomes. The company features are applications of this goal engine. |
 | **REHT** | **REHT Research Group**, the organization publishing Hermes Unlimited. REHT is used as the group's name here, not as an expanded technical acronym. |
 | **CAVO** | **Chief AI Value Officer**: the function of evaluating AI costs, expected value, budgets, and return on investment. “CAVO economics” means the software calculations supporting that function, not a human executive role supplied by the plugin. |
 | **A2UI** | **Agent-to-User Interface**: structured, agent-facing data rendered as user interface surfaces. Current bundled surfaces are read-only and limited in scope. |
