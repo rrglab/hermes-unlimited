@@ -17,6 +17,7 @@ import sys
 from typing import Any
 
 TARGET = "rrglab/hermes-unlimited"
+INTAKE_ISSUE = 34
 SCHEMA_VERSION = 1
 FAMILIES = frozenset({"file_lookup", "email_read", "email_draft", "dns_lookup",
                       "code_review", "test_execution", "general", "other"})
@@ -179,8 +180,9 @@ def publish(data_dir: Path, *, now: datetime | None = None,
     # remote outcome is unknown: a retry must not silently duplicate an Issue.
     if receipt.exists():
         return "NOT_SENT_ALREADY_RECORDED"
-    # The repo must explicitly provide a public Issues inbox. Never fall back
-    # to creating PRs, arbitrary repository writes or uploading raw event logs.
+    # Require a public Issues receiver. Contributors do NOT need permission to
+    # create Issues, only permission to comment on the dedicated intake issue.
+    # Never fall back to PRs, arbitrary repository writes, or raw event logs.
     check = runner(["gh", "api", "repos/" + TARGET, "--jq", ".has_issues"],
                    capture_output=True, text=True, timeout=20, check=False)
     if check.returncode != 0 or check.stdout.strip() != "true":
@@ -189,7 +191,8 @@ def publish(data_dir: Path, *, now: datetime | None = None,
             "No task contents, prompts, identities, source paths, credentials, or raw traces.\n"
             "Numbers are contributed observations, NOT independently verified benchmarks.\n\n"
             "```json\n" + json.dumps(batch, sort_keys=True, indent=2) + "\n```\n")
-    title = "Task/model feedback aggregate " + batch["window_end"]
+    # Fixed community intake thread permits contributions by read-only repo
+    # collaborators, and avoids opening a new Issue every half-day per user.
     # Reserve before the remote side effect; exclusive creation is atomic.
     # Pending state is never retried automatically after an ambiguous failure.
     receipt.parent.mkdir(parents=True, exist_ok=True)
@@ -210,17 +213,18 @@ def publish(data_dir: Path, *, now: datetime | None = None,
         with tempfile.TemporaryDirectory() as tmp:
             body_path = Path(tmp) / "body.md"
             body_path.write_text(body, encoding="utf-8")
-            result = runner(["gh", "issue", "create", "--repo", TARGET, "--title", title,
-                             "--body-file", str(body_path)], capture_output=True, text=True,
-                            timeout=30, check=False)
+            result = runner(["gh", "issue", "comment", str(INTAKE_ISSUE),
+                             "--repo", TARGET, "--body-file", str(body_path)],
+                            capture_output=True, text=True, timeout=30, check=False)
     except (OSError, subprocess.TimeoutExpired):
         return "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE"
     if result.returncode != 0 or not re.fullmatch(
-            r"https://github\.com/" + re.escape(TARGET) + r"/issues/[0-9]+",
+            r"https://github\.com/" + re.escape(TARGET) + r"/issues/" + str(INTAKE_ISSUE)
+            + r"#issuecomment-[0-9]+",
             result.stdout.strip()):
         return "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE"
     receipt.write_text(json.dumps({"target": TARGET, "slot": slot_id,
-                                   "issue_url": result.stdout.strip(),
+                                   "comment_url": result.stdout.strip(),
                                    "status": "SENT"}) + "\n", encoding="utf-8")
     receipt.chmod(0o600)
     return "SENT_AGGREGATES " + result.stdout.strip()
