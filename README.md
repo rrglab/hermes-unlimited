@@ -34,12 +34,13 @@ Create AI-native companies for yourself and your customers. Turn business goals 
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
-## Release status — 0.1.0-alpha.7
+## Release status — 0.1.0-alpha.8
 
 **This repository (`rrglab/hermes-unlimited`) is the canonical public code release of Hermes Unlimited by REHT Research Group.** The AGY Autonomous Company Engine was merged into public `main` in [PR #16](https://github.com/rrglab/hermes-unlimited/pull/16) at commit [`deb7cc91`](https://github.com/rrglab/hermes-unlimited/commit/deb7cc91fd9c1dca1fbd858defaac532eb01d98e). The current public release extends the AGY core with a read-only community adapter directory and a bounded, host-approved chat webhook transport. Development remains private; published code is scoped, tested, and labeled with its actual operational maturity.
 
 | Release | Source / purpose | What it contains | Distribution |
 | --- | --- | --- | --- |
+| **0.1.0-alpha.8** | `rrglab/hermes-unlimited` public source | Alpha.7 plus read-only native Hermes tool `unlimited_junior_discovery` (20 registered tools total); safely discovers installed tool schemas and syncs provider/tenant-scoped schema fingerprints to the host registry. Produces `DRAFT_UNVERIFIED` junior specs; no model qualification or activation | Public source; **not yet approved or pinned in Nous catalog** |
 | **0.1.0-alpha.7** | `rrglab/hermes-unlimited` public source | Alpha.6 core plus free community adapter discovery and host-approved Slack-compatible outbound chat transport; 19 registered Hermes tools and three feedback hooks | Public source; **not yet approved or pinned in Nous catalog** |
 | **0.1.0-alpha.6** | `rrglab/hermes-unlimited@9836141dedf12239e5558d4ccd6be910f657f34f` | AGY Company OS, Mission Engine, CAVO economics, Company Memory, Service Factory, A2UI, 17 native tools and three feedback hooks | Submitted for Nous catalog review in [PR #155722](https://github.com/NousResearch/hermes-agent/pull/155722); **not yet merged** |
 | **0.1.0-alpha.5** | Earlier `rrglab` manifest version | Transitional public core before full AGY merge | Superseded |
@@ -47,9 +48,13 @@ A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for
 
 The [original hackathon catalog PR #153503](https://github.com/NousResearch/hermes-agent/pull/153503) merged on 13 November 2026 and remains pinned to `nsolland` alpha.4. [PR #155722](https://github.com/NousResearch/hermes-agent/pull/155722) proposes migrating the **existing** catalog entry to `rrglab` alpha.6 (17 tools, three hooks). Alpha.7 is a subsequent public-source release candidate with two additional adapter tools; it is **not** part of PR #155722. Catalog availability changes only after an independently reviewed and merged SHA-bump PR. Do not equate public GitHub source availability with catalog installation.
 
+### Native Tool → Agent discovery (alpha.8)
+
+The `unlimited_junior_discovery` native tool now exposes `discover` (read-only proposals) and `sync` (tenant-scoped persisted tool fingerprints). Both require a verified JustYou profile. For `hermes`, schemas come from Hermes's actual registry; `connector` uses native connector search and the user's Hermes-managed account; MCP/OpenAPI schemas must be supplied by a trusted Hermes host callback. Generated candidates are *drafts only* with no credentials, execution authority or qualified model. Neither operation installs or invokes the junior agent, and `sync` persists only schema digests, not account content. See [Tool-to-Agent documentation](docs/TOOL_TO_AGENT_PIPELINE.md).
+
 ### Experimental Tool → Agent pipeline (public source)
 
-A source-only, standalone [Tool → Capability → Junior Agent library](docs/TOOL_TO_AGENT_PIPELINE.md) is included for testing and community contributions. It normalizes Hermes/MCP/connector/OpenAPI tool definitions, generates one-tool draft Junior profiles, suggests test contracts, and detects contract changes through optional tenant-scoped SQLite fingerprints. It **does not install agents, connect accounts, choose models, or grant tool permissions**. This library is not registered as a new Hermes plugin tool in the current alpha; the tool count and catalog pin below are unchanged.
+A source-only, standalone [Tool → Capability → Junior Agent library](docs/TOOL_TO_AGENT_PIPELINE.md) is included for testing and community contributions. It normalizes Hermes/MCP/connector/OpenAPI tool definitions, generates one-tool draft Junior profiles, suggests test contracts, and detects contract changes through optional tenant-scoped SQLite fingerprints. It **does not install agents, connect accounts, choose models, or grant tool permissions**. The library remains accessible independently of the single native discovery tool. The upstream Nous catalog pin is unchanged.
 
 ### What is implemented in the public core
 

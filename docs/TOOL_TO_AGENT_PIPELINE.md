@@ -1,6 +1,6 @@
 # Tool → Capability → Junior Agent (experimental public library)
 
-Hermes Unlimited can build **draft** one-tool Junior Agent specifications from existing Hermes tool schemas, MCP tools, connector metadata, or supplied OpenAPI 3.x specifications. This is a reusable Python library, not a second agent runtime. The current public alpha does **not** register a new Hermes tool or automatically install generated agents.
+Hermes Unlimited can build **draft** one-tool Junior Agent specifications from existing Hermes tool schemas, MCP tools, connector metadata, or supplied OpenAPI 3.x specifications. This is a reusable Python library, not a second agent runtime. Alpha.8 registers `unlimited_junior_discovery` as a native Hermes tool, but does **not** automatically install generated agents.
 
 ## Goal
 
@@ -31,6 +31,22 @@ assert second["candidates"][0]["change"] == "UNCHANGED"
 ```
 
 For an existing **host-owned** SQLite database, use `sync_discovery(db_path, provider, tenant, source_key, callback)` from `unlimited.junior_pipeline_store`. This persists only names and fingerprints, scoped by provider, tenant and source. It does not start a scheduler or authorize any tool call. Invoke it only in trusted host code; never expose arbitrary storage paths to agents.
+
+## Hermes native plugin integration (alpha.8)
+
+When Hermes Unlimited is installed and JustYou validates the current profile, agents can call the **read-only discovery** operation:
+
+```json
+{"operation":"discover","source":"hermes","toolset":"file"}
+```
+
+To record and compare tool schema fingerprints in the profile's configured provider/tenant registry, invoke:
+
+```json
+{"operation":"sync","source":"hermes","toolset":"file"}
+```
+
+The same tool supports `source="connector"` with `query="search email"`, delegated to the existing Hermes managed-connector catalog. For `source="mcp"` and `source="openapi"`, a **trusted host** must provide `discover_junior_tool_schemas(source, namespace)`. Models cannot submit a raw schema, connection ID, OAuth token, API key, storage path, provider ID, tenant ID, or permission boolean to this native tool. An unavailable integration fails closed; it is not treated as installed. Neither `discover` nor `sync` qualifies a model or grants execution rights.
 
 ## Supported inputs
 

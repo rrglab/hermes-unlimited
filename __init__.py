@@ -215,6 +215,12 @@ def register(ctx):
     register_company_tools(ctx, scoped_secret, scoped_identity)
 
     try:
+        from .unlimited.junior_native import register_junior_discovery
+    except ImportError:
+        from unlimited.junior_native import register_junior_discovery
+    register_junior_discovery(ctx, scoped_secret, scoped_identity)
+
+    try:
         from .feedback_task_model.hermes_hooks import register_feedback_hooks
     except ImportError:
         from feedback_task_model.hermes_hooks import register_feedback_hooks
