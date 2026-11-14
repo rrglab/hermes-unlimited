@@ -34,6 +34,35 @@ Create AI-native companies for yourself and your customers. Turn business goals 
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
+## Names and acronyms
+
+Hermes Unlimited builds on **Hermes Agent**, the open-source agent runtime from NousResearch. The names below describe components or interfaces; they are not all separate agents, products, or shipped integrations.
+
+| Term | Meaning in this project |
+| --- | --- |
+| **AGY** | **Autonomous Goal Engine**: goal-oriented orchestration that turns objectives into bounded missions, coordinates execution, tracks progress, and learns from verified outcomes. The company features are applications of this goal engine. |
+| **REHT** | **REHT Research Group**, the organization publishing Hermes Unlimited. REHT is used as the group's name here, not as an expanded technical acronym. |
+| **CAVO** | **Chief AI Value Officer**: the function of evaluating AI costs, expected value, budgets, and return on investment. “CAVO economics” means the software calculations supporting that function, not a human executive role supplied by the plugin. |
+| **A2UI** | **Agent-to-User Interface**: structured, agent-facing data rendered as user interface surfaces. Current bundled surfaces are read-only and limited in scope. |
+| **JustYou** | The identity and signed-session verification system required for trusted provider/tenant context. It is a product name, not an acronym. |
+| **The Thread** | Optional external, durable agent/conversation memory integration; distinct from the embedded Company Memory. |
+| **AI** | **Artificial Intelligence**. |
+| **OS** | **Operating System**; “Company OS” is the company-management logic, not a replacement for the host operating system. |
+| **CLI** | **Command-Line Interface**, such as the `hermes` terminal command. |
+| **API** | **Application Programming Interface**, a contract through which software tools communicate. |
+| **MCP** | **Model Context Protocol**, a standard interface for tools and context. |
+| **UI** | **User Interface**, the human-facing controls and views. |
+| **ROI** | **Return on Investment**; estimates in this repository are not measured customer returns. |
+| **SLA** | **Service Level Agreement**, used for constraints and targets rather than guaranteed service performance. |
+| **SMTP** | **Simple Mail Transfer Protocol**, used by the optional, approval-gated email connection. |
+| **SQLite** | An embedded relational database engine; its name is not an acronym. |
+| **CI** | **Continuous Integration**, the automated test checks on proposed changes. |
+| **CodeQL** | GitHub's code-analysis technology; a product name rather than an expanded acronym. |
+| **SHA** | **Secure Hash Algorithm**, used here to identify pinned Git commits or content. |
+| **PR** | **Pull Request**, a proposed change reviewed before merging. |
+
+**Scope note:** A term appearing in the glossary does not imply that its live integration is included or production-verified. See the release table and [Boundary](#boundary).
+
 ## Release status — 0.1.0-alpha.7
 
 **This repository (`rrglab/hermes-unlimited`) is the canonical public code release of Hermes Unlimited by REHT Research Group.** The AGY Autonomous Company Engine was merged into public `main` in [PR #16](https://github.com/rrglab/hermes-unlimited/pull/16) at commit [`deb7cc91`](https://github.com/rrglab/hermes-unlimited/commit/deb7cc91fd9c1dca1fbd858defaac532eb01d98e). The current public release extends the AGY core with a read-only community adapter directory and a bounded, host-approved chat webhook transport. Development remains private; published code is scoped, tested, and labeled with its actual operational maturity.
