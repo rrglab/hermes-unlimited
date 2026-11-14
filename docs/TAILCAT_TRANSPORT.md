@@ -144,3 +144,24 @@ actual run on the PR head yields an independently reviewed five-check
 PASS, the PR must stay Draft. DERP fallback, replay defense, rotation,
 mutual authentication and local argv-capability exposure remain
 separate security blockers for production.
+
+## Isolated transport smoke evidence (2026-11-14)
+
+On Acer, the pinned upstream Tailcat v0.6.0 OCI image was executed in
+two separate Docker containers. An ephemeral server address was consumed
+without being logged or published; a client sent a fixed payload over a
+real Tailcat connection and the server received identical bytes.
+The committed, explicitly manual reproducer is:
+
+```sh
+python3 tests/tailcat_local_docker_smoke.py
+```
+
+Observed: `PASS: local two-container Tailcat data transfer (not full E2E)`.
+The focused Tailcat/JustYou offline suite also passed (19/19) at
+`c24a124` on Acer. This is single-host transport smoke evidence only:
+it does not prove two independent physical hosts, DERP fallback, JustYou
+validation against a live registry, host endpoint authorization, tenant
+isolation, an authenticated service, or Hermes-runtime end-to-end behavior.
+The separate `tailcat_live_e2e_gate.py` remains BLOCKED without an
+independent trusted live fixture; do not promote the PR on this evidence.
