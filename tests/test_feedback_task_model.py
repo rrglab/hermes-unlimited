@@ -24,6 +24,7 @@ class FeedbackTaskModelTests(unittest.TestCase):
         self.temp.cleanup()
 
     def add_events(self, count=3, at=None):
+        set_consent(self.dir, agree=True, now=NOW - timedelta(hours=3))
         for _ in range(count):
             record(self.dir, TRIAL, now=at or NOW - timedelta(hours=2))
 
@@ -60,6 +61,7 @@ class FeedbackTaskModelTests(unittest.TestCase):
 
     def test_publish_is_fail_closed_without_consent_or_public_issues(self):
         self.add_events()
+        set_consent(self.dir, agree=False)
         calls = []
         def mock_runner(*args, **kwargs):
             calls.append(args)
@@ -88,6 +90,47 @@ class FeedbackTaskModelTests(unittest.TestCase):
         self.assertIn("```json", bodies[0])
         self.assertEqual(publish(self.dir, now=NOW, runner=fake_runner), "NOT_SENT_ALREADY_RECORDED")
         self.assertEqual(len(bodies), 1)
+
+    def test_manual_record_requires_consent(self):
+        with self.assertRaisesRegex(ValueError, "NO_VALID_FEEDBACK_CONSENT"):
+            record(self.dir, TRIAL, now=NOW)
+        self.assertFalse((self.dir / "events.jsonl").exists())
+        set_consent(self.dir, agree=True, now=NOW)
+        record(self.dir, TRIAL, now=NOW)
+        set_consent(self.dir, agree=False)
+        with self.assertRaisesRegex(ValueError, "NO_VALID_FEEDBACK_CONSENT"):
+            record(self.dir, TRIAL, now=NOW)
+        self.assertEqual(len((self.dir / "events.jsonl").read_text().splitlines()), 1)
+
+    def test_publish_reservation_blocks_reentrant_sender(self):
+        self.add_events()
+        calls = []
+        def runner(cmd, **kwargs):
+            if cmd[1] == "api":
+                return subprocess.CompletedProcess(cmd, 0, stdout="true\\n", stderr="")
+            calls.append(cmd)
+            # Emulate another cron process racing to send this slot.
+            self.assertEqual(publish(self.dir, now=NOW, runner=runner),
+                             "NOT_SENT_ALREADY_RECORDED")
+            return subprocess.CompletedProcess(cmd, 0,
+                stdout="https://github.com/rrglab/hermes-unlimited/issues/123\\n", stderr="")
+        self.assertTrue(publish(self.dir, now=NOW, runner=runner).startswith("SENT_AGGREGATES"))
+        self.assertEqual(len(calls), 1)
+
+    def test_ambiguous_remote_failure_blocks_retry(self):
+        self.add_events()
+        calls = []
+        def runner(cmd, **kwargs):
+            calls.append(cmd)
+            if cmd[1] == "api":
+                return subprocess.CompletedProcess(cmd, 0, stdout="true\\n", stderr="")
+            raise subprocess.TimeoutExpired(cmd, 30)
+        self.assertEqual(publish(self.dir, now=NOW, runner=runner),
+                         "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE")
+        before = len(calls)
+        self.assertEqual(publish(self.dir, now=NOW, runner=runner),
+                         "NOT_SENT_ALREADY_RECORDED")
+        self.assertEqual(len(calls), before)
 
     def test_invalid_event_log_lines_cannot_expand_public_schema(self):
         self.add_events()
