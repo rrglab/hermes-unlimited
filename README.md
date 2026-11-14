@@ -349,7 +349,7 @@ with **all five** provider/model selections, for example:
 These are illustrative **model slots**, not an activation or guarantee that
 those providers/models are available to a given profile. Config contains no
 tokens, endpoints, or passwords. Calls use the host's Hermes profile, incur its
-normal usage costs, and run with no requested toolsets and bounded turn/time.
+normal usage costs, and run in Hermes safe mode (no plugins/MCP/custom\ntools) with bounded turn/time. Safe mode ignores user config and may make\nprofile-specific providers unavailable; in that case the council fails closed.
 For a real panel, each seat must be independently evaluated; different roles
 on the same model do **not** imply model-family independence.
 
