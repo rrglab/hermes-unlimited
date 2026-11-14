@@ -116,3 +116,18 @@ def test_council_limits_parallel_hermes_processes():
         await asyncio.gather(*(members[role]('system', 'case') for role in members))
     asyncio.run(check())
     assert peak == 1
+
+
+def test_chair_accepts_aggregate_input_without_truncation():
+    seen = []
+    def fake(args, **kwargs):
+        seen.append(kwargs['input'])
+        return CompletedProcess(args, 0, json.dumps({"type":"result", "exit_code":0, "text":"Chair synthesis"}), "")
+    large_case = "Evidence with dissent: " + "x" * 60000
+    with unittest.TestCase().assertRaisesRegex(CouncilUnavailable, 'COUNCIL_INPUT_TOO_LARGE'):
+        _invoke('hermes', SEATS['explorer'], 'sys', large_case, runner=fake)
+    class Host: pass
+    c = configure_council(Host(),lambda k,d='': json.dumps(SEATS) if k.endswith('COUNCIL_MODELS') else d,runner=fake)
+    _,chair = c
+    assert asyncio.run(chair('sys', large_case)) == 'Chair synthesis'
+    assert large_case in seen[0]
