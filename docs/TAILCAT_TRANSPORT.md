@@ -30,7 +30,31 @@ An application protocol envelope, key rotation, replay defense, peer key
 attestation and live mutual authentication remain separately required.
 This is a guarded integration contract, not a complete deployment.
 
-## JustYou -> endpoint integration\n\n```python\nfrom unlimited.justyou_endpoint_bridge import JustYouEndpointBridge\nfrom unlimited.tailcat_transport import TailcatTransport\n\n# Host supplies a real JustYouVerifier (signed binding), trusted endpoint\n# registry and policy/authorization check. Never use model-supplied values.\nbridge = JustYouEndpointBridge(\n    verify_profile=justyou_verifier.verify,\n    resolve_endpoint=trusted_host_resolver,\n    authorize_endpoint=trusted_host_endpoint_authorizer,\n    transport=TailcatTransport(allow_argv_secret_exposure=True),\n)\n# provider/tenant/service must also come from trusted Hermes runtime context.\nreply = bridge.exchange(provider=host_provider, tenant=host_tenant,\n                        service=host_service, payload=b'hello')\n```\n\nThis demonstration does not provide a host registry, invoke live peers, or\ncreate an execution permit. Do not deploy without independent peer identity\nvalidation and endpoint authorization at the service boundary.\n\n## Adapter\n
+## JustYou -> endpoint integration
+
+```python
+from unlimited.justyou_endpoint_bridge import JustYouEndpointBridge
+from unlimited.tailcat_transport import TailcatTransport
+
+# Host supplies a real JustYouVerifier (signed binding), trusted endpoint
+# registry and policy/authorization check. Never use model-supplied values.
+bridge = JustYouEndpointBridge(
+    verify_profile=justyou_verifier.verify,
+    resolve_endpoint=trusted_host_resolver,
+    authorize_endpoint=trusted_host_endpoint_authorizer,
+    transport=TailcatTransport(allow_argv_secret_exposure=True),
+)
+# provider/tenant/service must also come from trusted Hermes runtime context.
+reply = bridge.exchange(provider=host_provider, tenant=host_tenant,
+                        service=host_service, payload=b'hello')
+```
+
+This demonstration does not provide a host registry, invoke live peers, or
+create an execution permit. Do not deploy without independent peer identity
+validation and endpoint authorization at the service boundary.
+
+## Adapter
+
 `unlimited.tailcat_transport.TailcatTransport` invokes an externally installed
 Tailcat CLI. There is no automatic connection, registered Hermes tool, UI
 surface, background daemon, or host identity bypass.
