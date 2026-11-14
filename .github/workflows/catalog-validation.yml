@@ -1,0 +1,39 @@
+name: Hermes catalog compatibility
+on:
+  pull_request:
+    paths:
+      - "plugin.yaml"
+      - "__init__.py"
+      - "unlimited/**"
+      - "feedback_task_model/**"
+      - ".github/workflows/catalog-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Hermes Unlimited
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+      - name: Checkout Hermes upstream
+        uses: actions/checkout@v4
+        with:
+          repository: NousResearch/hermes-agent
+          path: hermes
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+      - name: Install Hermes from lockfile
+        run: uv sync --project ./hermes --locked
+      - name: Validate plugin and dependencies
+        run: uv run --project ./hermes hermes plugins validate "$GITHUB_WORKSPACE/plugin" --install-deps
