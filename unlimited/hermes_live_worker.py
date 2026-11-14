@@ -87,10 +87,8 @@ JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGN
 
 def ensure_hermes_runtime_loaded(hermes_root: str | Path | None = None) -> Path:
     """Configure environment and sys.path so Hermes Agent modules can be imported in-process."""
-    os.environ.setdefault("HERMES_DISABLE_LAZY_INSTALLS", "1")
-    os.environ.setdefault("HERMES_YOLO_MODE", "1")
-    os.environ.setdefault("HERMES_ACCEPT_HOOKS", "1")
-    os.environ.setdefault("HERMES_SINGLE_QUERY_SESSION", "1")
+    # Never modify host approval, hooks, session or installation policies.
+    # Any optional research-only in-process runtime must inherit host settings.
 
     root = Path(
         hermes_root
