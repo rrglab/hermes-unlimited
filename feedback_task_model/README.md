@@ -36,3 +36,7 @@ The protocol must not be used for covert analytics. Public feedback can be untru
 For an explicitly managed local deployment, copy the files of this folder into `~/.hermes/plugins/hermes-community-feedback/`, then use `hermes plugins enable hermes-community-feedback --no-allow-tool-override`. Verify with `hermes plugins show hermes-community-feedback`. The gateway reloads the observers when enabled. The local opt-in and 12-hour cron publisher are separate, persistent configuration.
 
 **Do not enable the sidecar alongside a newer Hermes Unlimited plugin already registering `feedback_task_model.hermes_hooks`: both would observe the same turns and produce duplicate data.** Disable the sidecar before upgrading to such a version. No existing runtime plugin needs to be replaced for the sidecar to work.
+
+## Runtime correlation and data integrity
+
+Hermes observation callbacks are correlated by the **same session and turn identifier**, and duplicate `api_request_id` callbacks count only once. A record is dropped if turn identity is absent or if a turn switches models, rather than attributing a mixed-model result to one specialist. Runtime observers measure completion but never claim verified task correctness. Invalid or ambiguous historical samples must be quarantined locally rather than submitted to the community.
