@@ -41,6 +41,7 @@ config_schema:
   HERMES_UNLIMITED_JUSTYOU_IDENTITY: {type: str, default: "", description: "JustYou identity"}
   HERMES_UNLIMITED_REGISTRY_DB: {type: str, default: "", description: "SQLite registry path"}
   HERMES_UNLIMITED_HERMES_CLI: {type: str, default: "hermes", description: "Hermes CLI path"}
+  HERMES_UNLIMITED_COUNCIL_MODELS: {type: str, default: "", description: "JSON with provider/model for explorer, builder, economist, skeptic and chair; no credentials"}
   HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL: {type: str, default: "", description: "Loopback JustYou validator URL"}
   JUSTYOU_BINDINGS_FILE: {type: str, default: "", description: "Private signed binding cache path"}
   JUSTYOU_AUTHORITY_KEY_FILE: {type: str, default: "", description: "Public authority verifier key file"}
