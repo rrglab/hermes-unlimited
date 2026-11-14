@@ -94,13 +94,13 @@ def make_bridge(native_tool, *, token, host='127.0.0.1', port=0):
             view = query.get('view', [''])[0]
             surface_id = query.get('surface_id', [''])[0]
             company_id = query.get('company_id', [''])[0]
-            if (view not in ('companies', 'requests') or not _ID.fullmatch(surface_id)
+            if (view not in ('companies', 'requests', 'missions') or not _ID.fullmatch(surface_id)
                 or (view == 'companies' and 'company_id' in query)
-                or (view == 'requests' and not _COMPANY.fullmatch(company_id))):
+                or (view in ('requests', 'missions') and not _COMPANY.fullmatch(company_id))):
                 self._error(400)
                 return
             args = {'view': view, 'surface_id': surface_id}
-            if view == 'requests':
+            if view in ('requests', 'missions'):
                 args['company_id'] = company_id
             try:
                 result = native_tool(args)
