@@ -2,6 +2,8 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
+from types import SimpleNamespace
+from unlimited.justyou import JustYouVerifier
 
 from unlimited.justyou_endpoint_bridge import EndpointBinding, EndpointDenied, JustYouEndpointBridge
 from unlimited.tailcat_transport import TailcatTransport
@@ -79,6 +81,35 @@ class EndpointBridgeTests(unittest.TestCase):
         self.assertNotIn(ADDRESS, str(error.exception))
         self.assertIsNone(error.exception.__cause__)
         self.transport.exchange.assert_not_called()
+
+    def test_existing_justyou_verifier_contract_end_to_end_offline(self):
+        class Sessions:
+            def validate(self, token, audience, required_scope):
+                return SimpleNamespace(valid=True, authority=False, audience=audience,
+                                       scopes=("read-profile",), address="@owner")
+
+        class SignedProfile:
+            identity = "@owner"
+            carrier = "hermes-profile"
+            endpoint = "hermes-profile:owner-test"
+            version = 2
+
+            def digest(self):
+                return "verified-profile-digest"
+
+        class Resolver:
+            def resolve(self, identity, **kwargs):
+                return SignedProfile(), SimpleNamespace(
+                    identity=identity, binding_digest="verified-profile-digest",
+                    resolved_version=2, status="RESOLVED")
+
+        verifier = JustYouVerifier(Sessions(), Resolver(), "owner-test", "session")
+        bridge = JustYouEndpointBridge(verifier.verify, self.resolve,
+                                       self.authorize, self.transport)
+        response = bridge.exchange(provider="provider-a", tenant="tenant-a",
+                                   service="research", payload=b"request", max_bytes=16)
+        self.assertEqual(response, b"response")
+        self.resolve.assert_called_once_with("@owner", "provider-a", "tenant-a", "research")
 
     def test_invalid_binding_fails(self):
         with self.assertRaises(ValueError):
