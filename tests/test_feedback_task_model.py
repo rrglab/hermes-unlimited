@@ -107,13 +107,13 @@ class FeedbackTaskModelTests(unittest.TestCase):
         calls = []
         def runner(cmd, **kwargs):
             if cmd[1] == "api":
-                return subprocess.CompletedProcess(cmd, 0, stdout="true\\n", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout="true\n", stderr="")
             calls.append(cmd)
             # Emulate another cron process racing to send this slot.
             self.assertEqual(publish(self.dir, now=NOW, runner=runner),
                              "NOT_SENT_ALREADY_RECORDED")
             return subprocess.CompletedProcess(cmd, 0,
-                stdout="https://github.com/rrglab/hermes-unlimited/issues/123\\n", stderr="")
+                stdout="https://github.com/rrglab/hermes-unlimited/issues/123\n", stderr="")
         self.assertTrue(publish(self.dir, now=NOW, runner=runner).startswith("SENT_AGGREGATES"))
         self.assertEqual(len(calls), 1)
 
@@ -123,7 +123,7 @@ class FeedbackTaskModelTests(unittest.TestCase):
         def runner(cmd, **kwargs):
             calls.append(cmd)
             if cmd[1] == "api":
-                return subprocess.CompletedProcess(cmd, 0, stdout="true\\n", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout="true\n", stderr="")
             raise subprocess.TimeoutExpired(cmd, 30)
         self.assertEqual(publish(self.dir, now=NOW, runner=runner),
                          "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE")
