@@ -23,7 +23,11 @@ FAMILIES = frozenset({"file_lookup", "email_read", "email_draft", "dns_lookup",
 MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/+\-]{0,95}$")
 ALLOWED = frozenset({"task_family", "model", "verified", "success",
                      "latency_ms", "cost_usd", "input_tokens", "output_tokens", "completed"})
-DEFAULT_HOME = Path.home() / ".hermes" / "feedback_task_model"
+def _default_home() -> Path:
+    # Resolve at invocation, so HERMES_PROFILE and HERMES_HOME are honored.
+    from hermes_constants import get_hermes_home
+    return Path(get_hermes_home()) / "feedback_task_model"
+
 
 
 def utcnow() -> datetime:
@@ -218,7 +222,7 @@ def publish(data_dir: Path, *, now: datetime | None = None,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Opt-in aggregate-only Hermes community feedback")
     parser.add_argument("command", choices=("record", "preview", "publish", "consent", "revoke", "status"))
-    parser.add_argument("--data-dir", type=Path, default=Path(os.getenv("HERMES_FEEDBACK_HOME", DEFAULT_HOME)))
+    parser.add_argument("--data-dir", type=Path, default=Path(os.environ["HERMES_FEEDBACK_HOME"]) if os.getenv("HERMES_FEEDBACK_HOME") else _default_home())
     parser.add_argument("--agree", action="store_true", help="Explicitly permit public aggregate submissions")
     parser.add_argument("--days", type=int, default=30)
     args = parser.parse_args(argv)
