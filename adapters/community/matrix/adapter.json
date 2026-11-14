@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "matrix",
+  "name": "Matrix",
+  "version": "0.1.0",
+  "description": "Use an existing Matrix client protocol implementation",
+  "upstream_url": "https://matrix.org/",
+  "documentation_url": "https://spec.matrix.org/latest/client-server-api/",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "chat.message.receive",
+    "chat.message.send"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}

@@ -238,6 +238,84 @@ class ToolIntegrationTests(unittest.TestCase):
                               "tenant": "other"})
         self.assertEqual(response["reason"], "INVALID_ARGUMENTS")
 
+    def test_adapter_chat_real_registry_admission_contract(self):
+        from unlimited.adapter_gate import (
+            AdapterRegistration, AdapterDenied, TenantAdapterRegistry,
+        )
+        from unlimited.webhook_delivery import WebhookDestination
+        checks = {k: "passed" for k in ("unit", "contract", "security", "integration")}
+        reg = AdapterRegistration("ember", "VERIFIED", ("chat.message.send",),
+                                  independently_tested=True, checks=checks)
+        registry = TenantAdapterRegistry()
+        registry.register_adapter(reg)
+        self.ctx.tenant_adapter_registry = registry
+        self.ctx.approve_adapter_effect = lambda *args: True
+        self.ctx.resolve_adapter_destination = lambda *args: WebhookDestination(
+            "https://example.org/secrets-stay-host-side")
+        # No grant: no outbound effect.
+        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
+            denied = self.call("unlimited_adapter_chat_post", {
+                "adapter_id": "ember", "connection_id": "team", "text": "Blocked"})
+            self.assertFalse(denied["ok"])
+            sender.assert_not_called()
+        registry.configure_tenant_jackets("tenant-a", optional_grants={
+            "ember": ("chat.message.send",)})
+        with patch("unlimited.webhook_delivery.post_chat_message",
+                   return_value={"accepted": True, "delivery_verified": False, "status": 200}):
+            result = self.call("unlimited_adapter_chat_post", {
+                "adapter_id": "ember", "connection_id": "team", "text": "Allowed"})
+        self.assertTrue(result["accepted"])
+        self.assertFalse(result["delivery_verified"])
+        self.settings["HERMES_UNLIMITED_TENANT_ID"] = "tenant-b"
+        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
+            denied = self.call("unlimited_adapter_chat_post", {
+                "adapter_id": "ember", "connection_id": "team", "text": "Wrong tenant"})
+            self.assertFalse(denied["ok"])
+            sender.assert_not_called()
+
+    def test_adapter_chat_post_fails_closed_without_host_admission(self):
+        result = self.call("unlimited_adapter_chat_post", {
+            "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["reason"], "PermissionError")
+
+    def test_adapter_chat_post_uses_justyou_and_host_scoped_config(self):
+        from unittest.mock import Mock
+        from unlimited.webhook_delivery import WebhookDestination
+        tenant_registry = Mock()
+        self.ctx.tenant_adapter_registry = tenant_registry
+        self.ctx.approve_adapter_effect = lambda tenant, identity, adapter, cid, cap: (
+            tenant == "tenant-a" and identity == "@owner"
+            and adapter == "ember" and cid == "team" and cap == "chat.message.send")
+        self.ctx.resolve_adapter_destination = lambda *args: WebhookDestination("https://example.org/secret-webhook")
+        with patch("unlimited.webhook_delivery.post_chat_message",
+                   return_value={"accepted": True, "delivery_verified": False, "status": 200}):
+            result = self.call("unlimited_adapter_chat_post", {
+                "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["accepted"])
+        self.assertFalse(result["delivery_verified"])
+        tenant_registry.authorize_tenant_capability.assert_called_once_with(
+            tenant_id="tenant-a", adapter_id="ember",
+            capability="chat.message.send", require_release_eligible=True)
+        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@another"
+        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
+            denied = self.call("unlimited_adapter_chat_post", {
+                "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
+            self.assertFalse(denied["ok"])
+            sender.assert_not_called()
+
+    def test_community_adapter_discovery_tool_is_read_only(self):
+        result = self.call("unlimited_adapter_discover")
+        self.assertTrue(result["ok"])
+        self.assertGreaterEqual(result["count"], 14)
+        self.assertFalse(result["execution_enabled"])
+        self.assertTrue(all(not item["can_execute"] for item in result["adapters"]))
+        only = self.call("unlimited_adapter_discover", {"id": "ember"})
+        self.assertEqual(only["count"], 1)
+        self.assertEqual(only["adapters"][0]["state"], "catalog-only")
+        self.assertFalse(self.call("unlimited_adapter_discover", {"tenant": "other"})["ok"])
+
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
         self.assertNotIn("unlimited_creative_result", self.ctx.handlers)

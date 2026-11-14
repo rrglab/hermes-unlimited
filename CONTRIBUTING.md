@@ -41,3 +41,23 @@ Reviewers check reproducible local tests, security and licensing, readable docum
 PRs targeting `main` must not be merged without an explicit release decision. New functionality can be developed on separate feature branches without changing the competition baseline.
 
 For security-sensitive findings, **do not open a public exploit issue or post credentials**. Contact the maintainers privately using the repository's security reporting mechanism if enabled; otherwise use the contact address shown in the README without including secrets in initial contact.
+
+
+## Free community adapters
+
+Generate a proposal with:
+    python -m unlimited.community_adapters scaffold my-service --directory adapters/community
+
+Share the resulting manifest, API contract implementation, test cases and
+documentation via pull request. Catalog discovery never installs or authorizes
+code. JustYou and the existing per-tenant adapter gate remain mandatory.
+Apache-2.0 covers contributions to this repo; third-party costs and licenses
+must be disclosed separately. Do not mark your own proposal approved.
+
+
+Validate all manifests with
+`python -m unlimited.community_adapters validate`. A scaffold now includes
+an inert example adapter.py to help contributors package their own API
+integration. It is intentionally not auto-imported. The working outbound
+webhook adapter in unlimited/webhook_delivery.py illustrates the host-
+injected capability and identity boundary; it may be reused under Apache-2.0.
