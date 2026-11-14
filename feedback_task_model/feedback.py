@@ -43,7 +43,7 @@ def _date(value: str) -> datetime:
 
 def validate_trial(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict) or set(raw) != ALLOWED:
-        raise ValueError("ONLY_EIGHT_ALLOWLISTED_FIELDS_ACCEPTED")
+        raise ValueError("ONLY_NINE_ALLOWLISTED_FIELDS_ACCEPTED")
     family, model = raw["task_family"], raw["model"]
     if family not in FAMILIES or not isinstance(model, str) or not MODEL_RE.fullmatch(model):
         raise ValueError("INVALID_TASK_FAMILY_OR_MODEL")
