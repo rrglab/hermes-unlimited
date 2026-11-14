@@ -25,7 +25,14 @@ ALLOWED = frozenset({"task_family", "model", "verified", "success",
                      "latency_ms", "cost_usd", "input_tokens", "output_tokens", "completed"})
 def _default_home() -> Path:
     # Resolve at invocation, so HERMES_PROFILE and HERMES_HOME are honored.
-    from hermes_constants import get_hermes_home
+    try:
+        from hermes_constants import get_hermes_home
+    except ImportError:
+        # Standalone tests have no Hermes host. Never silently use the default
+        # profile if a non-default profile is explicitly selected.
+        if os.getenv("HERMES_PROFILE"):
+            raise RuntimeError("HERMES_PROFILE_HOME_UNAVAILABLE")
+        return Path(os.getenv("HERMES_HOME", str(Path.home() / ".hermes"))) / "feedback_task_model"
     return Path(get_hermes_home()) / "feedback_task_model"
 
 
