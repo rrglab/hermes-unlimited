@@ -44,8 +44,9 @@ def parse_seats(raw: str) -> dict[str, dict[str, str]]:
 
 
 def _invoke(hermes: str, seat: Mapping[str, str], system: str, prompt: str,
-            *, runner=subprocess.run, timeout: int = 180) -> str:
-    if len(system) + len(prompt) > _LIMIT:
+            *, runner=subprocess.run, timeout: int = 180,
+            input_limit: int = _LIMIT) -> str:
+    if len(system) + len(prompt) > input_limit:
         raise CouncilUnavailable("COUNCIL_INPUT_TOO_LARGE")
     # Query via stdin, not argv or shell. Safe mode disables plugins,
     # MCP, injected rules and tool customizations; one bounded turn.
@@ -110,7 +111,9 @@ def configure_council(ctx, scoped_secret, *, runner=subprocess.run):
         async def call(system, prompt):
             async with limiter:
                 return await asyncio.to_thread(
-                    _invoke, hermes, seats[role], system, prompt, runner=runner)
+                    _invoke, hermes, seats[role], system, prompt, runner=runner,
+                    timeout=300 if role == "chair" else 180,
+                    input_limit=100_000 if role == "chair" else _LIMIT)
         return call
 
     return {role: make_call(role) for role in ROLES[:-1]}, make_call("chair")
