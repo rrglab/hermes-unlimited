@@ -70,6 +70,24 @@ class CouncilTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(CouncilError, "non-empty"):
             await council.run("Launch?", self.answers)
 
+    async def test_oversized_chair_evidence_is_explicitly_scoped(self):
+        prompts = []
+        async def expert(system, prompt):
+            return "Evidence against premature certainty " + ("observations " * 1000)
+        async def chair(system, prompt):
+            prompts.append(prompt)
+            return json.dumps({"status": "CONSENSUS", "synthesis": "Review of excerpts only",
+                               "dissent": [], "uncertainty": []})
+        council = SocraticCouncil({"explorer": expert, "skeptic": expert}, chair)
+        record = await council.run("Launch?", self.answers)
+        self.assertEqual(record.chair_input_scope, "EXCERPTS_ONLY")
+        self.assertGreater(record.chair_input_omitted_chars, 0)
+        self.assertEqual(record.status, "INSUFFICIENT_EVIDENCE")
+        self.assertTrue(any("Full expert responses" in u for u in record.uncertainty))
+        self.assertLess(len(prompts[0]), 14000)
+        self.assertGreater(len(record.independent["explorer"]), 10000)
+        self.assertIn('EXCERPTS_ONLY', prompts[0])
+
     def test_one_expert_rejected(self):
         with self.assertRaises(CouncilError):
             SocraticCouncil({"only": lambda a, b: None}, lambda a, b: None)
