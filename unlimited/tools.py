@@ -402,9 +402,10 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                         tenant, identity, company_id, objective.objective_id
                     ) is not True:
                         raise PermissionError("HERMES_MISSION_APPROVAL_REQUIRED")
-                    if not callable(worker_fn) and scoped_secret("HERMES_UNLIMITED_LIVE_WORKER", "") != "1":
-                        # Deterministic fixture output must never be exposed as a
-                        # verified real-world mission through the native Hermes tool.
+                    if not callable(worker_fn):
+                        # A plugin may not bootstrap Hermes internals or bypass host
+                        # approval to construct its own model worker. Only an explicitly
+                        # provisioned host capability can execute customer missions.
                         raise RuntimeError("HERMES_TRUSTED_MISSION_WORKER_REQUIRED")
                     engine_kwargs = {
                         "verify_identity": verify,
@@ -419,17 +420,6 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                             raise RuntimeError("HERMES_TRUSTED_OUTCOME_VERIFIER_REQUIRED")
                         engine_kwargs["worker"] = worker_fn
                         engine_kwargs["verifier"] = trusted_verifier
-                    elif scoped_secret("HERMES_UNLIMITED_LIVE_WORKER", "") == "1":
-                        from .economics import LIVE_HERMES_MODEL_CATALOG, EconomicIntelligenceEngine
-                        from .hermes_live_worker import HermesLiveIndependentCritic, HermesLiveWorkerAdapter
-                        engine_kwargs["economic_engine"] = EconomicIntelligenceEngine(
-                            models=LIVE_HERMES_MODEL_CATALOG,
-                            policy=policy,
-                        )
-                        engine_kwargs["worker"] = HermesLiveWorkerAdapter()
-                        engine_kwargs["verifier"] = IndependentOutcomeVerifier(
-                            independent_critic=HermesLiveIndependentCritic()
-                        )
                     mission_engine = AutonomousMissionEngine(**engine_kwargs)
                     report = mission_engine.execute_objective(
                         provider_id=provider,
