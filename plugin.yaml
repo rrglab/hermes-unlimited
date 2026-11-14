@@ -1,6 +1,6 @@
 name: hermes-unlimited
 kind: standalone
-version: 0.1.0-alpha.5
+version: 0.1.0-alpha.6
 description: Native Hermes public core for provider-operated AI-native companies
 requires_hermes: ">=0.21.5"
 provides_tools:
