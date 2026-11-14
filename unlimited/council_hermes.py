@@ -44,7 +44,7 @@ def parse_seats(raw: str) -> dict[str, dict[str, str]]:
 
 
 def _invoke(hermes: str, seat: Mapping[str, str], system: str, prompt: str,
-            *, runner=subprocess.run, timeout: int = 90) -> str:
+            *, runner=subprocess.run, timeout: int = 180) -> str:
     if len(system) + len(prompt) > _LIMIT:
         raise CouncilUnavailable("COUNCIL_INPUT_TOO_LARGE")
     # Query via stdin, not argv or shell. Safe mode disables plugins,
