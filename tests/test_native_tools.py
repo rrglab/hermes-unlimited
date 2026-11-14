@@ -110,6 +110,19 @@ class ToolIntegrationTests(unittest.TestCase):
             self.assertEqual(result["reason"], "RuntimeError")
         self.assertEqual(len(self.submissions), 0)
 
+    def test_unauthorized_live_worker_flag_does_not_enable_execution(self):
+        """A legacy config flag cannot substitute for an approved host worker."""
+        from unittest.mock import patch
+        mission = {"company_id": "company-a", "objective_id": "mission-live-denied",
+                   "title": "No unauthorized execution", "target_value_minor": 5000}
+        self.ctx.authorize_mission = lambda *args: True
+        self.ctx.mission_worker = None
+        with patch.dict("os.environ", {"HERMES_UNLIMITED_LIVE_WORKER": "1"}):
+            result = self.call("unlimited_mission_run", mission)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["reason"], "RuntimeError")
+        self.assertEqual(len(self.submissions), 0)
+
     def test_manifest_declares_all_registered_tools(self):
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
         tools_section = manifest.split("provides_tools:", 1)[1].split("\nrequires_env:", 1)[0]
