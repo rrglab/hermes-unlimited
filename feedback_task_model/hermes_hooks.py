@@ -10,7 +10,7 @@ from pathlib import Path
 import threading
 from typing import Any
 
-from .feedback import DEFAULT_HOME, consent_valid, record
+from .feedback import _default_home, consent_valid, record
 
 MAX_PENDING_TURNS = 2048
 
@@ -45,7 +45,7 @@ def _key(kwargs: dict[str, Any]) -> tuple[str, str] | None:
 
 class FeedbackObserver:
     def __init__(self, data_dir: Path | None = None):
-        self.data_dir = data_dir or DEFAULT_HOME
+        self.data_dir = data_dir if data_dir is not None else _default_home()
         self._lock = threading.RLock()
         self._pending: OrderedDict[tuple[str, str], dict[str, Any]] = OrderedDict()
 
