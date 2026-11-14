@@ -278,3 +278,30 @@ successful offline test does not establish a live GPU workflow or finished media
 The GitHub hero is [`assets/brand/github-banner.svg`](assets/brand/github-banner.svg). The official product lockup is [`assets/brand/wordmark.svg`](assets/brand/wordmark.svg). Use [`assets/brand/icon.svg`](assets/brand/icon.svg) for app icons and [`assets/brand/infinity.svg`](assets/brand/infinity.svg) where the standalone infinity mark is needed.
 
 Brand colors: midnight `#0B0F17`, champagne gold `#C9A76A`, and ivory `#F8F9F5`. The product name is **Hermes Unlimited**; the endorsement is **by REHT**. These assets are product branding, not a claim that optional integrations are included in this repository.
+
+
+## Free community adapter directory (preview)
+
+Hermes Unlimited can index community-provided adapters for existing services
+without reimplementing those services. The first entries cover Ember, Slack,
+GitHub, Cloudflare, Outlook, Matrix, Zulip and Mattermost.
+
+Commands:
+    python -m unlimited.community_adapters list
+    python -m unlimited.community_adapters inspect ember
+    python -m unlimited.community_adapters scaffold my-service --directory adapters/community
+
+The native Hermes tool unlimited_adapter_discover is read-only. Starter entries
+are catalog-only, not working service connections. Contributions and discovery
+are free; provider subscriptions and API usage may have their own costs.
+JustYou remains mandatory and production admission is controlled by the
+existing tenant-scoped host adapter gate.
+See adapters/community/README.md for contributions.
+
+
+A thin outbound Slack-compatible webhook transport is also implemented as
+`unlimited_adapter_chat_post`, using existing Hermes JustYou identity,
+tenant-scoped admission and host-managed destinations. It does not authorize
+itself, run Ember/Slack, or claim message readback. The default community
+catalog entries remain non-executable until independently reviewed and
+approved by the existing host adapter gate.
