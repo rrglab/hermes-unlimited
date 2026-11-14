@@ -72,6 +72,10 @@ class FeedbackTaskModelTests(unittest.TestCase):
         self.assertEqual(publish(self.dir, now=NOW, runner=mock_runner), "NOT_SENT_TARGET_ISSUES_DISABLED")
         self.assertEqual(len(calls), 1)
 
+    def test_default_home_without_hermes_runtime(self):
+        from feedback_task_model.feedback import _default_home
+        self.assertEqual(_default_home().name, "feedback_task_model")
+
     def test_successful_public_aggregate_is_idempotent(self):
         self.add_events()
         set_consent(self.dir, agree=True, now=NOW)
@@ -79,10 +83,12 @@ class FeedbackTaskModelTests(unittest.TestCase):
         def fake_runner(cmd, **kwargs):
             if cmd[1] == "api":
                 return subprocess.CompletedProcess(cmd, 0, stdout="true\n", stderr="")
+            self.assertEqual(cmd[:4], ["gh", "issue", "comment", "34"])
+            self.assertEqual(cmd[cmd.index("--repo") + 1], "rrglab/hermes-unlimited")
             body = Path(cmd[cmd.index("--body-file") + 1]).read_text()
             bodies.append(body)
             return subprocess.CompletedProcess(cmd, 0,
-                stdout="https://github.com/rrglab/hermes-unlimited/issues/123\n", stderr="")
+                stdout="https://github.com/rrglab/hermes-unlimited/issues/34#issuecomment-123\n", stderr="")
         result = publish(self.dir, now=NOW, runner=fake_runner)
         self.assertTrue(result.startswith("SENT_AGGREGATES"))
         self.assertIn('"samples": 3', bodies[0])
@@ -113,7 +119,7 @@ class FeedbackTaskModelTests(unittest.TestCase):
             self.assertEqual(publish(self.dir, now=NOW, runner=runner),
                              "NOT_SENT_ALREADY_RECORDED")
             return subprocess.CompletedProcess(cmd, 0,
-                stdout="https://github.com/rrglab/hermes-unlimited/issues/123\n", stderr="")
+                stdout="https://github.com/rrglab/hermes-unlimited/issues/34#issuecomment-123\n", stderr="")
         self.assertTrue(publish(self.dir, now=NOW, runner=runner).startswith("SENT_AGGREGATES"))
         self.assertEqual(len(calls), 1)
 
