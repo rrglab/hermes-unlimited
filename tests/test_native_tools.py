@@ -83,6 +83,84 @@ class ToolIntegrationTests(unittest.TestCase):
     def call(self, tool, args=None):
         return json.loads(self.ctx.handlers[tool](args or {}))
 
+    def test_junior_discovery_host_registry_and_incremental_sync(self):
+        class FakeRegistry:
+            def get_all_tool_names(self): return ["read_file", "write_file", "other_tool"]
+            def get_toolset_for_tool(self, name): return "file" if name != "other_tool" else "other"
+            def get_definitions(self, names, quiet=False):
+                return [{"function": {"name": name, "description": "Test "+name,
+                         "parameters": {"type": "object", "properties": {
+                             "path": {"type": "string"}}, "required": ["path"]}}}
+                        for name in sorted(names)]
+        self.ctx.tool_registry=FakeRegistry()
+        name="unlimited_junior_discovery"
+        args={"operation":"sync", "source":"hermes", "toolset":"file"}
+        first=self.call(name,args)
+        self.assertEqual(first["count"],2,first)
+        self.assertEqual({x["change"] for x in first["candidates"]},{"NEW"})
+        self.assertTrue(all(not x["execution_authorized"] for x in first["candidates"]))
+        self.assertTrue(all(not x["has_credentials"] for x in first["candidates"]))
+        repeat=self.call(name,args)
+        self.assertEqual({x["change"] for x in repeat["candidates"]},{"UNCHANGED"})
+        self.assertEqual(repeat["previous_count"],2)
+        self.assertEqual(self.call(name,{**args,"operation":"discover"})["count"],2)
+        self.assertFalse(self.call(name,{**args,"schemas":[{"name":"fake"}]})["ok"])
+        self.assertFalse(self.call(name,{**args,"tenant":"fake"})["ok"])
+
+    def test_junior_discovery_rejects_missing_identity_and_missing_host_api(self):
+        name="unlimited_junior_discovery"
+        payload={"operation":"sync", "source":"mcp", "namespace":"tenant-test"}
+        self.assertFalse(self.call(name,payload)["ok"])
+        self.ctx.discover_junior_tool_schemas=lambda source,namespace:[{
+            "name":"get_ticket","parameters":{"type":"object","properties":{}}}]
+        first=self.call(name,payload)
+        self.assertEqual(first["count"],1)
+        self.assertEqual(first["candidates"][0]["status"],"DRAFT_UNVERIFIED")
+        self.ctx.justyou_session_store.validate=lambda *a,**kw:SimpleNamespace(
+            valid=False, authority=False, address="", audience="", scopes=())
+        self.assertFalse(self.call(name,payload)["ok"])
+
+    def test_junior_discovery_uses_existing_hermes_connector_search(self):
+        from unittest.mock import patch
+        mod=types.ModuleType("tools.connectors.search")
+        def search(queries):
+            self.assertEqual(queries,["search Gmail inbox"])
+            entry=SimpleNamespace(schema={"function":{
+                "name":"connector__gmail__search_messages", "description":"Search Gmail",
+                "parameters":{"type":"object","properties":{
+                    "query":{"type":"string"}},"required":["query"]}}})
+            return [[entry]],None
+        mod.connector_entries_by_group=search
+        pkg=types.ModuleType("tools");pkg.__path__=[]
+        conn=types.ModuleType("tools.connectors");conn.__path__=[]
+        existing={name:sys.modules.get(name) for name in
+                  ("tools","tools.connectors","tools.connectors.search")}
+        sys.modules.update({"tools":pkg,"tools.connectors":conn,"tools.connectors.search":mod})
+        args={"operation":"discover","source":"connector","query":"search Gmail inbox"}
+        try:
+            found=self.call("unlimited_junior_discovery",args)
+            self.assertEqual(found["count"],1,found)
+            self.assertEqual(found["candidates"][0]["tool"],"connector__gmail__search_messages")
+            self.assertFalse(found["execution_authorized"])
+            mod.connector_entries_by_group=lambda queries:([[]],"sign_in_expired")
+            self.assertFalse(self.call("unlimited_junior_discovery",args)["ok"])
+        finally:
+            for name, value in existing.items():
+                if value is None:sys.modules.pop(name,None)
+                else:sys.modules[name]=value
+
+    def test_junior_discovery_openapi_requires_host_spec(self):
+        name="unlimited_junior_discovery"
+        spec={"openapi":"3.1.0","paths":{"/tickets/{id}":{"get":{
+            "operationId":"get_ticket","parameters":[{"name":"id","required":True,
+            "schema":{"type":"string"}}]}}}}
+        self.ctx.discover_junior_tool_schemas=lambda source, namespace:spec
+        result=self.call(name,{"operation":"discover", "source":"openapi", "namespace":"test"})
+        self.assertEqual(result["candidates"][0]["tool"],"get_ticket")
+        self.assertFalse(result["execution_authorized"])
+        self.assertFalse(self.call(name,{"operation":"discover", "source":"openapi",
+                                          "namespace":"test", "openapi_spec":spec})["ok"])
+
     def test_autonomous_tool_requires_host_authorization_and_real_worker(self):
         self.call("unlimited_company_create", {"company_id": "company-a", "display_name": "A"})
         mission = {"company_id": "company-a", "objective_id": "mission-1",
