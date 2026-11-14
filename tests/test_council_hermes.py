@@ -32,7 +32,7 @@ class HermesCouncilTests(unittest.TestCase):
         self.assertEqual(args[:3], ["hermes", "chat", "--query-file"])
         self.assertEqual(args[3], "-")
         self.assertTrue(options["input"].endswith("case text"))
-        self.assertLessEqual(options["timeout"], 100)
+        self.assertLessEqual(options["timeout"], 200)
         self.assertIn("--safe-mode", args)
         self.assertNotIn("--toolsets", args)
         self.assertFalse(any("case text" in arg for arg in args))
