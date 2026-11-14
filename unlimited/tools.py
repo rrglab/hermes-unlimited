@@ -159,39 +159,35 @@ SCHEMAS = (
 
 
 def _default_council_callables(ctx):
+    """Only a genuinely host-supplied council may produce a review."""
     members = getattr(ctx, "socratic_council_members", None)
     chair = getattr(ctx, "socratic_council_chair", None)
-    if members and chair:
-        return members, chair
-
-    async def make_lens(role, _system, prompt):
-        data = json.loads(prompt)
-        if "candidates" in data:
-            return (
-                f"[{role} critique] Reviewed anonymous candidates; verified falsification test "
-                f"and challenged optimistic cost/latency assumptions."
-            )
-        return (
-            f"[{role} independent analysis] Evaluated problem and assumptions; "
-            f"counterargument: proceeding without independent verification risks negative EV."
-        )
-
-    async def default_chair(_system, prompt):
-        data = json.loads(prompt)
-        case = json.loads(data["case"])
-        q = case.get("question", "")
-        return json.dumps({
-            "status": "DISSENT",
-            "synthesis": f"Proceed conditionally on '{q}' only with independent outcome verification and positive marginal EV.",
-            "dissent": ["Skeptic lens requires empirical verification receipt before marking outcome billable."],
-            "uncertainty": ["Tail latency and retry rate under external provider outage remain bounded by SLA cap."],
-        })
-
-    default_members = {
-        role: (lambda sys_p, usr_p, _r=role: make_lens(_r, sys_p, usr_p))
+    if not isinstance(members, dict) or not all(
+        callable(members.get(role))
         for role in ("explorer", "builder", "economist", "skeptic")
+    ) or not callable(chair):
+        return None
+    return members, chair
+
+
+def _host_capability_ready(ctx, name):
+    """Keep unavailable experimental tools out of Hermes model schemas."""
+    required = {
+        "unlimited_mission_run": ("authorize_mission", "mission_worker", "mission_verifier"),
+        "unlimited_company_cycle": ("authorize_mission", "mission_worker", "mission_verifier"),
+        "unlimited_service_factory": ("authorize_mission", "mission_worker", "mission_verifier"),
+        "unlimited_connection_manage": ("approve_customer_connection", "onboard_customer_connection"),
     }
-    return default_members, default_chair
+    attrs = required.get(name, ())
+    if name == "unlimited_connection_manage":
+        return all(callable(getattr(ctx, attr, None)) for attr in attrs)
+    if not attrs:
+        return True
+    from .autonomy import IndependentOutcomeVerifier
+    return (callable(getattr(ctx, "authorize_mission", None))
+            and callable(getattr(ctx, "mission_worker", None))
+            and isinstance(getattr(ctx, "mission_verifier", None), IndependentOutcomeVerifier)
+            and callable(ctx.mission_verifier.independent_critic))
 
 
 def register_company_tools(ctx, scoped_secret, scoped_identity):
@@ -567,7 +563,10 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                     out = {"ok": True, **blueprint.as_dict()}
                 elif name == "unlimited_socratic_council":
                     from .socratic_council import SocraticCouncil
-                    members, chair = _default_council_callables(ctx)
+                    callables = _default_council_callables(ctx)
+                    if callables is None:
+                        return json.dumps({"ok": False, "reason": "COUNCIL_UNAVAILABLE"})
+                    members, chair = callables
                     council = SocraticCouncil(members, chair)
                     record = asyncio.run(council.run(args["question"], args["answers"]))
                     out = {"ok": True, **record.as_dict()}
@@ -648,4 +647,5 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
 
     for schema in SCHEMAS:
         ctx.register_tool(name=schema["name"], toolset="hermes_unlimited",
-                          schema=schema, handler=make_handler(schema["name"]))
+                          schema=schema, handler=make_handler(schema["name"]),
+                          check_fn=lambda name=schema["name"]: _host_capability_ready(ctx, name))
