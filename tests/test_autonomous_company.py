@@ -463,7 +463,7 @@ class AutonomousCompanyTests(unittest.TestCase):
             handlers={},
         )
         ctx.get_config = lambda name, default="": settings.get(name, default)
-        ctx.register_tool = lambda name, toolset, schema, handler: ctx.handlers.__setitem__(name, handler)
+        ctx.register_tool = lambda name, toolset, schema, handler, check_fn=None: ctx.handlers.__setitem__(name, handler)
         # Explicit fixture-only host authorization and deterministic test worker.
         # Production runtime must never receive this synthetic worker by default.
         from unlimited.autonomy import IndependentOutcomeVerifier, default_deterministic_worker
