@@ -299,6 +299,8 @@ class ToolIntegrationTests(unittest.TestCase):
             tenant_id="tenant-a", adapter_id="ember",
             capability="chat.message.send", require_release_eligible=True)
         self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@another"
+        # Isolate JustYou rejection from the separate host effect policy.
+        self.ctx.approve_adapter_effect = lambda *args: True
         with patch("unlimited.webhook_delivery.post_chat_message") as sender:
             denied = self.call("unlimited_adapter_chat_post", {
                 "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
