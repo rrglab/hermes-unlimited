@@ -56,7 +56,7 @@ The [NousResearch Hermes Agent hackathon submission #153503](https://github.com/
 - **Connections and effects:** tenant-bound SMTP/Stripe connection contracts with vault references, explicit effect approval and non-delivery/non-settlement receipt semantics; there is no claim of live customer billing or payment capture.
 - **Trust and adapters:** mandatory JustYou signed session/profile verification; optional tenant-scoped adapter eligibility; no receipt or model-generated claim authorizes an external effect by itself.
 - **Captain's Bridge / A2UI:** read-only company, request, mission and readiness surfaces, with a scoped local bridge. This is not yet a complete customer-facing operations cockpit.
-- **Hermes worker interface:** opt-in host-bound integration for live model calls and an independent critic, with fallback and timeout controls. Local offline tests do **not** verify external provider operation.
+- **Hermes worker interface:** mission execution requires an explicitly host-provided worker and independent verifier. The plugin does not bootstrap Hermes internals or provide autonomous provider credentials; offline tests do **not** verify external provider operation.
 
 **Current evidence:** [PR #16](https://github.com/rrglab/hermes-unlimited/pull/16) passed GitHub CI on Python 3.11, 3.12 and 3.13 plus CodeQL. Post-merge tests and CodeQL on `deb7cc91` were also green. Local release-candidate tests: 127 passed, 2 skipped, 24 subtests; unittest 129 run, 2 skipped. CodeRabbit *did not perform* review on PR #16 (automatic review skipped; manual requests rate-limited). These are software test results, not independent proof of productive business outcomes. See [AGY scope and limits](docs/AGY_COMPANY_ENGINE_SCOPE.md).
 
@@ -187,7 +187,7 @@ The tool registry in [`plugin.yaml`](plugin.yaml) is the authoritative install m
 | Interface and review | `unlimited_a2ui_surface`, `unlimited_socratic_council` |
 | Connections | `unlimited_connection_manage` |
 
-The autonomous mission/cycle handlers require a trusted-host `authorize_mission` callback, a real host worker and an independent verifier/critic; missing capabilities are denied. An opt-in live Hermes worker is a supported code path but **not production-certified by the offline suite**. SMTP/Stripe effects are separately approval-gated. The Socratic Council is an advisory review, not an authority layer.
+The autonomous mission/cycle handlers require a trusted-host `authorize_mission` callback, a real host worker and an independent verifier/critic; missing capabilities are denied. The former in-process research adapter was excluded from the catalog-safe package; it remains recoverable from Git history before this release. Live execution must be supplied and authorized by the Hermes host. SMTP/Stripe effects are separately approval-gated. The Socratic Council is an advisory review, not an authority layer.
 
 ## Trusted profile setup
 
@@ -231,14 +231,12 @@ python3 -m unittest discover -s tests -v
 hermes plugins validate . --install-deps
 ```
 
-Local green tests remain canonical. Public GitHub Actions independently run
-offline unit tests on Python 3.11–3.13 and CodeQL security analysis on pull
-requests. CI results are advisory and do not attest to live Hermes dispatch,
+Local green tests remain canonical. Public GitHub Actions run offline unit tests on Python 3.11–3.13, CodeQL, and Hermes' upstream plugin catalog validator on supported Python 3.14. CI results are advisory and do not attest to live Hermes dispatch,
 customer effects, or production readiness. Dependabot checks action updates.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The 17 declared tools do not send mandatory telemetry. Opt-in Hermes live workers and explicitly authorized SMTP/Stripe adapters may contact selected external services; ComfyUI remains an optional, unregistered client. Network calls may incur external provider charges.
+- **Network:** The 17 declared tools do not send mandatory telemetry. Host-provisioned workers and explicitly authorized SMTP/Stripe adapters may contact selected external services; ComfyUI remains an optional, unregistered client. Network calls may incur external provider charges.
 - **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
