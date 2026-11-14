@@ -567,9 +567,8 @@ class AutonomousCompanyTests(unittest.TestCase):
                 "question": "Should Acme expand into autonomous tier-1 support?",
                 "answers": {k: f"Verified answer for {k}" for k, _ in QUESTIONS},
             })
-            self.assertTrue(council_out["ok"])
-            self.assertFalse(council_out["execution_authority"])
-            self.assertEqual(len(council_out["digest"]), 64)
+            # No fake four-reviewer verdict without an actual host council.
+            self.assertEqual(council_out, {"ok": False, "reason": "COUNCIL_UNAVAILABLE"})
 
     def test_11_routing_comparison_benchmark_evidence(self) -> None:
         comparison = run_routing_comparison()
