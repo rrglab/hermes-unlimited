@@ -21,6 +21,10 @@ provides_tools:
   - unlimited_service_factory
   - unlimited_socratic_council
   - unlimited_company_cycle
+provides_hooks:
+  - post_api_request
+  - post_tool_call
+  - on_session_end
 
 requires_env:
   - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
