@@ -323,3 +323,37 @@ tenant-scoped admission and host-managed destinations. It does not authorize
 itself, run Ember/Slack, or claim message readback. The default community
 catalog entries remain non-executable until independently reviewed and
 approved by the existing host adapter gate.
+
+
+### Socratic Council — real Hermes councillors (opt-in)
+
+The `unlimited_socratic_council` tool runs **four distinct deliberation seats**
+(`explorer`, `builder`, `economist`, `skeptic`) and a separate `chair`,
+using existing Hermes CLI/model subscriptions. It performs independent first
+opinions, anonymous cross-critique and dissent-preserving chair synthesis.
+This is deliberation only; it never authorizes or executes business actions.
+
+Set the plugin's `HERMES_UNLIMITED_COUNCIL_MODELS` configuration to a JSON string
+with **all five** provider/model selections, for example:
+
+```json
+{
+  "explorer": {"provider": "openai-codex", "model": "gpt-5.5"},
+  "builder": {"provider": "openai-codex", "model": "gpt-5.5"},
+  "economist": {"provider": "openrouter", "model": "deepseek/deepseek-v4-pro"},
+  "skeptic": {"provider": "openrouter", "model": "deepseek/deepseek-v4-pro"},
+  "chair": {"provider": "openai-codex", "model": "gpt-5.5"}
+}
+```
+
+These are illustrative **model slots**, not an activation or guarantee that
+those providers/models are available to a given profile. Config contains no
+tokens, endpoints, or passwords. Calls use the host's Hermes profile, incur its
+normal usage costs, and run with no requested toolsets and bounded turn/time.
+For a real panel, each seat must be independently evaluated; different roles
+on the same model do **not** imply model-family independence.
+
+Without a complete seat configuration (or five host-supplied callable seats),
+the tool returns `COUNCIL_UNAVAILABLE` rather than manufacturing opinions.
+A model failure also fails the round. A council synthesis is a recommendation,
+not independent factual proof, and dissent and uncertainty remain visible.
