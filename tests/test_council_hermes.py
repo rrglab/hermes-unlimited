@@ -34,7 +34,7 @@ def test_hermes_call_is_safe_bounded_and_without_shell():
     assert args[3] == "-"
     assert options["input"].endswith("case text")
     assert options["timeout"] <= 100
-    assert "--toolsets" in args and args[args.index("--toolsets") + 1] == ""
+    assert "--safe-mode" in args\n    assert "--source" in args and args[args.index("--source") + 1] == "tool"
     assert not any("case text" in arg for arg in args)
     assert options["check"] is False
 
