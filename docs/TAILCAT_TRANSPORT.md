@@ -34,9 +34,9 @@ surface, background daemon, or host identity bypass.
 - `ping(address, require_direct=False)` tests reachability.
 - `exchange(address, port, payload, max_bytes=...)` connects to an explicit
   TCP port on the remote Tailcat server, sends bytes, and receives a bounded
-  response. Stdout is spooled to a temporary file rather than buffered in
-  memory. Disk exhaustion remains a possible risk from an untrusted peer;
-  production use requires an output quota and process kill on overflow.
+  response. Stdout is read through a pipe with a strict `max_bytes + 1` cap;
+  responses above the limit terminate the subprocess. No unbounded temporary
+  file or subprocess stdout buffer is used. A timeout kills the child process.
 - Only opaque `tc...` addresses are accepted. DNS-derived public addresses are
   deliberately not supported.
 - Fail closed for missing executable, bad input, timeouts, and nonzero exits.
@@ -44,7 +44,14 @@ surface, background daemon, or host identity bypass.
 ## Security and deployment
 
 Tailcat addresses include a preshared bearer capability; never log, publish,
-put in prompts, or embed in public URLs. Sharing a Tailcat address is not proof
+put in prompts, or embed in public URLs. **The upstream Tailcat CLI takes that
+secret as a command-line argument**, which may be visible to other local
+processes or host audit tooling. This adapter cannot remove that exposure.
+Calls fail closed unless the operator explicitly constructs the transport with
+`allow_argv_secret_exposure=True`; that opt-in does **not** make the CLI safe
+against hostile local users. Do not activate the adapter on shared or untrusted
+hosts. Run it in an isolated, tightly permissioned environment or use a
+transport that does not expose bearer secrets in argv. Sharing a Tailcat address is not proof
 of JustYou identity. For persistent peers use allowlisted client keys and
 independent service-level authentication. The published Tailcat threat model
 is experimental and not designed for hostile unrelated tenants.
@@ -64,7 +71,8 @@ No implicit fallback to unencrypted transport is allowed.
 python -m unittest tests.test_tailcat_transport -v
 ```
 
-Tests mock `subprocess.run`, so they cannot prove real peer connectivity,
+Tests exercise real locally spawned stub subprocesses and mocked probe calls;
+they cannot prove real Tailcat peer connectivity,
 DERP fallback, JustYou identity continuity, tenant isolation, live Hermes
 execution, cancellation, or production readiness. The server-side service
 is not implemented here. No native JustYou repo changes are required for the
