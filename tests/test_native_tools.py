@@ -113,6 +113,7 @@ class ToolIntegrationTests(unittest.TestCase):
     def test_unauthorized_live_worker_flag_does_not_enable_execution(self):
         """A legacy config flag cannot substitute for an approved host worker."""
         from unittest.mock import patch
+        self.call("unlimited_company_create", {"company_id": "company-a", "display_name": "A"})
         mission = {"company_id": "company-a", "objective_id": "mission-live-denied",
                    "title": "No unauthorized execution", "target_value_minor": 5000}
         self.ctx.authorize_mission = lambda *args: True
