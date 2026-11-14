@@ -81,3 +81,42 @@ DERP fallback, JustYou identity continuity, tenant isolation, live Hermes
 execution, cancellation, or production readiness. The server-side service
 is not implemented here. No native JustYou repo changes are required for the
 transport contract at this point.
+
+## Minimum live E2E gate (release blocker)
+
+Run `python tests/tailcat_live_e2e_gate.py` on a **tightly isolated**
+operator-controlled node. Without a fixture it exits nonzero with
+`status=BLOCKED`; this is intentional. Offline tests do not count.
+
+Set `TAILCAT_LIVE_FIXTURE=your_trusted_fixture_module` and
+`TAILCAT_LIVE_OPT_IN=YES` only after a **real external** Tailcat peer,
+a mutually authenticated application service, and the real Hermes
+runtime / signed JustYou verification / trusted endpoint resolver /
+endpoint policy callbacks are configured. The fixture must export
+`build()`, returning an object implementing `exchange(payload, *,
+tenant=None, authorized=True, timeout=False, oversized=False)`,
+`tenant`, `proof()`, and optionally `close()`. Its normal
+`exchange` MUST use the full live chain, never mocks. The two fault
+flags must inject failures in the real service/network, not simply
+raise synthetic local exceptions. The `authorized=False` scenario
+must revoke actual host authorization; alternate tenant must use
+an unauthorized tenant and fail before network dispatch.
+
+The gate records five checks: real peer roundtrip, signed JustYou/
+endpoint/server authentication, tenant plus revoked authorization,
+bounded timeout plus oversized response, and traceable nonsecret
+evidence. It emits `tailcat-e2e-evidence.json` locally and returns
+nonzero on missing fixture, any failure, or missing proof. **A PASS is
+only a bounded experimental integration result**, not authorization
+for production deployment, multitenant use or merger. The fixture
+operator must independently inspect server logs to prove denied calls
+had zero remote effects. Never upload raw Tailcat addresses, logs,
+tokens, or CLI arguments. The JSON contains only boolean proof
+flags; evidence identifiers must be referenced separately in a
+secured evidence store.
+
+No live fixture or external peer is included in this PR. Until an
+actual run on the PR head yields an independently reviewed five-check
+PASS, the PR must stay Draft. DERP fallback, replay defense, rotation,
+mutual authentication and local argv-capability exposure remain
+separate security blockers for production.
