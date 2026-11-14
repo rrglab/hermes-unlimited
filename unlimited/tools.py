@@ -162,12 +162,10 @@ def _default_council_callables(ctx):
     """Only a genuinely host-supplied council may produce a review."""
     members = getattr(ctx, "socratic_council_members", None)
     chair = getattr(ctx, "socratic_council_chair", None)
-    if not isinstance(members, dict) or not all(
-        callable(members.get(role))
-        for role in ("explorer", "builder", "economist", "skeptic")
-    ) or not callable(chair):
-        return None
-    return members, chair
+    from .council_hermes import configure_council
+    return configure_council(ctx, lambda key, default="": (
+        ctx.get_config(key, default) if callable(getattr(ctx, "get_config", None))
+        else default))
 
 
 def _host_capability_ready(ctx, name):
