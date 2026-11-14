@@ -68,6 +68,8 @@ def validate_trial(raw: dict[str, Any]) -> dict[str, Any]:
 
 def record(data_dir: Path, trial: dict[str, Any], *, now: datetime | None = None) -> None:
     trial = validate_trial(trial)
+    if not consent_valid(data_dir, now=now):
+        raise ValueError("NO_VALID_FEEDBACK_CONSENT")
     data_dir.mkdir(parents=True, exist_ok=True)
     path = data_dir / "events.jsonl"
     # Only validated fields written; no prompt, tenant or filename metadata.
@@ -161,6 +163,9 @@ def publish(data_dir: Path, *, now: datetime | None = None,
         return "NOT_SENT_NO_ELIGIBLE_AGGREGATES"
     slot_id = batch["window_end"].replace(":", "-")
     receipt = data_dir / "receipts" / (slot_id + ".json")
+    # Atomic exclusive reservation prevents two cron processes from posting
+    # the same slot. A pending reservation is deliberately retained if the
+    # remote outcome is unknown: a retry must not silently duplicate an Issue.
     if receipt.exists():
         return "NOT_SENT_ALREADY_RECORDED"
     # The repo must explicitly provide a public Issues inbox. Never fall back
@@ -174,19 +179,38 @@ def publish(data_dir: Path, *, now: datetime | None = None,
             "Numbers are contributed observations, NOT independently verified benchmarks.\n\n"
             "```json\n" + json.dumps(batch, sort_keys=True, indent=2) + "\n```\n")
     title = "Task/model feedback aggregate " + batch["window_end"]
+    # Reserve before the remote side effect; exclusive creation is atomic.
+    # Pending state is never retried automatically after an ambiguous failure.
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with receipt.open("x", encoding="utf-8") as handle:
+            handle.write(json.dumps({"target": TARGET, "slot": slot_id,
+                                     "status": "PENDING_RECONCILIATION"}) + "\n")
+        receipt.chmod(0o600)
+    except FileExistsError:
+        return "NOT_SENT_ALREADY_RECORDED"
+    # Recheck revocation immediately before outbound delivery.
+    if not consent_valid(data_dir):
+        receipt.unlink(missing_ok=True)
+        return "NOT_SENT_NO_VALID_CONSENT"
     # --body-file avoids shell interpolation of submitted content.
     import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
-        body_path = Path(tmp) / "body.md"
-        body_path.write_text(body, encoding="utf-8")
-        result = runner(["gh", "issue", "create", "--repo", TARGET, "--title", title,
-                         "--body-file", str(body_path)], capture_output=True, text=True,
-                        timeout=30, check=False)
-    if result.returncode != 0 or not result.stdout.strip().startswith("https://github.com/" + TARGET + "/issues/"):
-        return "NOT_SENT_PUBLISH_FAILED"
-    receipt.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            body_path = Path(tmp) / "body.md"
+            body_path.write_text(body, encoding="utf-8")
+            result = runner(["gh", "issue", "create", "--repo", TARGET, "--title", title,
+                             "--body-file", str(body_path)], capture_output=True, text=True,
+                            timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE"
+    if result.returncode != 0 or not re.fullmatch(
+            r"https://github\.com/" + re.escape(TARGET) + r"/issues/[0-9]+",
+            result.stdout.strip()):
+        return "NOT_SENT_PUBLISH_UNCERTAIN_RECONCILE"
     receipt.write_text(json.dumps({"target": TARGET, "slot": slot_id,
-                                   "issue_url": result.stdout.strip()}) + "\n", encoding="utf-8")
+                                   "issue_url": result.stdout.strip(),
+                                   "status": "SENT"}) + "\n", encoding="utf-8")
     receipt.chmod(0o600)
     return "SENT_AGGREGATES " + result.stdout.strip()
 
