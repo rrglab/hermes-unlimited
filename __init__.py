@@ -144,3 +144,10 @@ def register(ctx):
     except ImportError:
         from unlimited.tools import register_company_tools
     register_company_tools(ctx, scoped_secret, scoped_identity)
+
+    try:
+        from .feedback_task_model.hermes_hooks import register_feedback_hooks
+    except ImportError:
+        from feedback_task_model.hermes_hooks import register_feedback_hooks
+    if callable(getattr(ctx, "register_hook", None)):
+        register_feedback_hooks(ctx)
