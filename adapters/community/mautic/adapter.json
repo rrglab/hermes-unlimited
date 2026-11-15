@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "mautic",
+  "name": "Mautic",
+  "version": "0.1.0",
+  "description": "Open marketing automation option for contacts, segments and campaigns",
+  "upstream_url": "https://github.com/mautic/mautic",
+  "documentation_url": "https://developer.mautic.org/",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "marketing.contact.read",
+    "marketing.campaign.read",
+    "marketing.campaign.write"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
