@@ -22,7 +22,8 @@ class OversightEntry:
     hourly_rate: Decimal
 
     def __post_init__(self):
-        if (not self.delivery_id or not self.minutes.is_finite() or not self.hourly_rate.is_finite()\n                or self.minutes < 0 or self.hourly_rate < 0):
+        if (not self.delivery_id or not self.minutes.is_finite() or not self.hourly_rate.is_finite()
+                or self.minutes < 0 or self.hourly_rate < 0):
             raise ValueError("delivery_id required; minutes and hourly_rate must be nonnegative")
 
     @property
@@ -39,7 +40,9 @@ class DeliveryEconomics:
     independently_verified: bool
 
     def __post_init__(self):
-        if (not self.delivery_id or not all(x.is_finite() for x in\n                (self.verified_benefit, self.ai_cost, self.recovery_cost))\n                or min(self.verified_benefit, self.ai_cost, self.recovery_cost) < 0):
+        if (not self.delivery_id or not all(x.is_finite() for x in
+                (self.verified_benefit, self.ai_cost, self.recovery_cost))
+                or min(self.verified_benefit, self.ai_cost, self.recovery_cost) < 0):
             raise ValueError("delivery_id required; amounts must be nonnegative")
 
 
