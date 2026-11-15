@@ -34,9 +34,11 @@ Create AI-native companies for yourself and your customers. Publish services. Re
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
-## Public source and planned migration
+## Official public release repository
 
-The original [Hermes Agent hackathon catalog submission](https://github.com/NousResearch/hermes-agent/pull/153503) was submitted by `nsolland` and currently uses [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) as its public source. [`rrglab/hermes-unlimited`](https://github.com/rrglab/hermes-unlimited) is the public REHT Research Group mirror and the **intended future home**. Both repositories are kept in sync for the released plugin core during this transition. A future migration of the catalog source to `rrglab` will be coordinated explicitly, with a new verified commit pin; this statement is not a claim that the catalog has already migrated.
+**This is the official REHT Research Group public release home for Hermes Unlimited.** New implementation work occurs in private DEV repositories; tested and approved public releases are promoted here through pull requests. Do not automatically mirror the frozen competition source into this repository or overwrite release documentation. Release changes require relevant passing tests and security checks before merge.
+
+The original [NousResearch Hermes Agent catalog entry #153503](https://github.com/NousResearch/hermes-agent/pull/153503) is already **merged**, but its alpha.4 pin still references [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) at `09cd80374b994fa38abc5ed6b8904b98ac9b3554`. That legacy repository is frozen for the competition submission. Changing the catalog URL or pinned source requires a separate reviewed upstream PR. No claim of externally verified customer fulfillment or payment settlement is implied.
 
 
 ## What works
