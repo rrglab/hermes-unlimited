@@ -40,8 +40,6 @@ class CouncilRecord:
     status: str
     digest: str
     execution_authority: bool = False
-    chair_input_scope: str = "FULL"
-    chair_input_omitted_chars: int = 0
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -118,38 +116,12 @@ class SocraticCouncil:
         critiques = dict(zip(roles, reviews))
         chair_input = json.dumps({"case": case, "candidates": anonymized,
                                   "blind_reviews": tuple(reviews)}, sort_keys=True)
-        chair_scope = "FULL"
-        omitted = 0
-        if len(chair_input) > 14_000:
-            # Preserve originals in the receipt. The chair gets explicitly
-            # labelled excerpts, never silent truncation or invented summaries.
-            def excerpt(value: str, maximum: int = 1400) -> str:
-                if len(value) <= maximum:
-                    return value
-                missing = len(value) - maximum
-                marker = f" [EXCERPT: {missing} chars not shown to chair] "
-                head = (maximum - len(marker)) // 2
-                tail = maximum - len(marker) - head
-                return value[:head] + marker + value[-tail:]
-
-            chair_candidates = {key: excerpt(value) for key, value in anonymized.items()}
-            chair_reviews = tuple(excerpt(value) for value in reviews)
-            omitted = (sum(len(value) for value in anonymized.values())
-                       + sum(len(value) for value in reviews)
-                       - sum(len(value) for value in chair_candidates.values())
-                       - sum(len(value) for value in chair_reviews))
-            chair_scope = "EXCERPTS_ONLY"
-            chair_input = json.dumps({"case": case, "candidates": chair_candidates,
-                                      "blind_reviews": chair_reviews,
-                                      "evidence_scope": chair_scope,
-                                      "omitted_characters": omitted}, sort_keys=True)
         chair_output = await self.chair(
             "Socratic chair. Preserve unresolved dissent and uncertainty. "
             "Return ONLY JSON with keys synthesis (string), dissent (array "
             "of strings), uncertainty (array of strings), status "
             "(CONSENSUS, DISSENT, or INSUFFICIENT_EVIDENCE). "
-            "Never claim execution authority or fabricate citations. "
-            "If evidence_scope is EXCERPTS_ONLY, explicitly acknowledge incomplete review.", chair_input)
+            "Never claim execution authority or fabricate citations.", chair_input)
         decision = _json_object(chair_output)
         status = decision.get("status")
         if status not in ("CONSENSUS", "DISSENT", "INSUFFICIENT_EVIDENCE"):
@@ -165,21 +137,12 @@ class SocraticCouncil:
             raise CouncilError("Chair uncertainty must be a list of non-empty strings")
         if status == "DISSENT" and not dissent:
             raise CouncilError("Dissent outcome requires recorded objections")
-        if chair_scope == "EXCERPTS_ONLY":
-            uncertainty.append(
-                f"Chair reviewed labelled excerpts; {omitted} original characters omitted "
-                "from chair input. Full expert responses are retained in the record."
-            )
-            if status == "CONSENSUS":
-                status = "INSUFFICIENT_EVIDENCE"
         payload = {"question": question, "answers": snapshot,
                    "independent": independent, "anonymous_critiques": critiques,
                    "synthesis": synthesis, "dissent": dissent,
-                   "uncertainty": uncertainty, "status": status,
-                   "chair_input_scope": chair_scope, "chair_input_omitted_chars": omitted}
+                   "uncertainty": uncertainty, "status": status}
         digest = hashlib.sha256(json.dumps(payload, sort_keys=True,
                                            ensure_ascii=False).encode()).hexdigest()
         return CouncilRecord(question, snapshot, independent, critiques,
                              synthesis, tuple(dissent), tuple(uncertainty),
-                             status, digest, chair_input_scope=chair_scope,
-                             chair_input_omitted_chars=omitted)
+                             status, digest)

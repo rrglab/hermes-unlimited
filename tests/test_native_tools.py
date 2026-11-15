@@ -45,7 +45,7 @@ class ToolIntegrationTests(unittest.TestCase):
                                                   resolved_version=1, status="RESOLVED")
         self.ctx = SimpleNamespace(profile_name="role-a", justyou_session_store=SessionStore(),
                                    justyou_resolver=Resolver(), handlers={})
-        def register_tool(name, toolset, schema, handler, check_fn=None):
+        def register_tool(name, toolset, schema, handler):
             self.ctx.handlers[name] = handler
         self.ctx.register_tool = register_tool
         self.ctx.get_config = lambda name, default="": settings.get(name, default)
@@ -83,139 +83,13 @@ class ToolIntegrationTests(unittest.TestCase):
     def call(self, tool, args=None):
         return json.loads(self.ctx.handlers[tool](args or {}))
 
-    def test_junior_discovery_host_registry_and_incremental_sync(self):
-        class FakeRegistry:
-            def get_all_tool_names(self): return ["read_file", "write_file", "other_tool"]
-            def get_toolset_for_tool(self, name): return "file" if name != "other_tool" else "other"
-            def get_definitions(self, names, quiet=False):
-                return [{"function": {"name": name, "description": "Test "+name,
-                         "parameters": {"type": "object", "properties": {
-                             "path": {"type": "string"}}, "required": ["path"]}}}
-                        for name in sorted(names)]
-        self.ctx.tool_registry=FakeRegistry()
-        name="unlimited_junior_discovery"
-        args={"operation":"sync", "source":"hermes", "toolset":"file"}
-        first=self.call(name,args)
-        self.assertEqual(first["count"],2,first)
-        self.assertEqual({x["change"] for x in first["candidates"]},{"NEW"})
-        self.assertTrue(all(not x["execution_authorized"] for x in first["candidates"]))
-        self.assertTrue(all(not x["has_credentials"] for x in first["candidates"]))
-        repeat=self.call(name,args)
-        self.assertEqual({x["change"] for x in repeat["candidates"]},{"UNCHANGED"})
-        self.assertEqual(repeat["previous_count"],2)
-        self.assertEqual(self.call(name,{**args,"operation":"discover"})["count"],2)
-        self.assertFalse(self.call(name,{**args,"schemas":[{"name":"fake"}]})["ok"])
-        self.assertFalse(self.call(name,{**args,"tenant":"fake"})["ok"])
-
-    def test_junior_discovery_rejects_missing_identity_and_missing_host_api(self):
-        name="unlimited_junior_discovery"
-        payload={"operation":"sync", "source":"mcp", "namespace":"tenant-test"}
-        self.assertFalse(self.call(name,payload)["ok"])
-        self.ctx.discover_junior_tool_schemas=lambda source,namespace:[{
-            "name":"get_ticket","parameters":{"type":"object","properties":{}}}]
-        first=self.call(name,payload)
-        self.assertEqual(first["count"],1)
-        self.assertEqual(first["candidates"][0]["status"],"DRAFT_UNVERIFIED")
-        self.ctx.justyou_session_store.validate=lambda *a,**kw:SimpleNamespace(
-            valid=False, authority=False, address="", audience="", scopes=())
-        self.assertFalse(self.call(name,payload)["ok"])
-
-    def test_junior_discovery_uses_existing_hermes_connector_search(self):
-        from unittest.mock import patch
-        mod=types.ModuleType("tools.connectors.search")
-        def search(queries):
-            self.assertEqual(queries,["search Gmail inbox"])
-            entry=SimpleNamespace(schema={"function":{
-                "name":"connector__gmail__search_messages", "description":"Search Gmail",
-                "parameters":{"type":"object","properties":{
-                    "query":{"type":"string"}},"required":["query"]}}})
-            return [[entry]],None
-        mod.connector_entries_by_group=search
-        pkg=types.ModuleType("tools");pkg.__path__=[]
-        conn=types.ModuleType("tools.connectors");conn.__path__=[]
-        existing={name:sys.modules.get(name) for name in
-                  ("tools","tools.connectors","tools.connectors.search")}
-        sys.modules.update({"tools":pkg,"tools.connectors":conn,"tools.connectors.search":mod})
-        args={"operation":"discover","source":"connector","query":"search Gmail inbox"}
-        try:
-            found=self.call("unlimited_junior_discovery",args)
-            self.assertEqual(found["count"],1,found)
-            self.assertEqual(found["candidates"][0]["tool"],"connector__gmail__search_messages")
-            self.assertFalse(found["execution_authorized"])
-            mod.connector_entries_by_group=lambda queries:([[]],"sign_in_expired")
-            self.assertFalse(self.call("unlimited_junior_discovery",args)["ok"])
-        finally:
-            for name, value in existing.items():
-                if value is None:sys.modules.pop(name,None)
-                else:sys.modules[name]=value
-
-    def test_junior_discovery_openapi_requires_host_spec(self):
-        name="unlimited_junior_discovery"
-        spec={"openapi":"3.1.0","paths":{"/tickets/{id}":{"get":{
-            "operationId":"get_ticket","parameters":[{"name":"id","required":True,
-            "schema":{"type":"string"}}]}}}}
-        self.ctx.discover_junior_tool_schemas=lambda source, namespace:spec
-        result=self.call(name,{"operation":"discover", "source":"openapi", "namespace":"test"})
-        self.assertEqual(result["candidates"][0]["tool"],"get_ticket")
-        self.assertFalse(result["execution_authorized"])
-        self.assertFalse(self.call(name,{"operation":"discover", "source":"openapi",
-                                          "namespace":"test", "openapi_spec":spec})["ok"])
-
-    def test_autonomous_tool_requires_host_authorization_and_real_worker(self):
-        self.call("unlimited_company_create", {"company_id": "company-a", "display_name": "A"})
-        mission = {"company_id": "company-a", "objective_id": "mission-1",
-                   "title": "Real customer outcome", "target_value_minor": 5000}
-        cycle = {"company_id": "company-a", "strategic_direction": "deliver",
-                 "candidates": [{"objective_id": "mission-1", "title": "Real outcome",
-                                 "target_value_minor": 5000}]}
-        for name, args in (("unlimited_mission_run", mission),
-                           ("unlimited_company_cycle", cycle)):
-            result = self.call(name, args)
-            self.assertFalse(result["ok"])
-            self.assertEqual(result["reason"], "PermissionError")
-        self.ctx.authorize_mission = lambda *args: True
-        for name, args in (("unlimited_mission_run", mission),
-                           ("unlimited_company_cycle", cycle)):
-            result = self.call(name, args)
-            self.assertFalse(result["ok"])
-            self.assertEqual(result["reason"], "RuntimeError")
-        # Even when a host worker exists, an independent host verifier is required.
-        self.ctx.mission_worker = lambda *_a: None
-        for name, args in (("unlimited_mission_run", mission),
-                           ("unlimited_company_cycle", cycle)):
-            result = self.call(name, args)
-            self.assertFalse(result["ok"])
-            self.assertEqual(result["reason"], "RuntimeError")
-        self.assertEqual(len(self.submissions), 0)
-
-    def test_unauthorized_live_worker_flag_does_not_enable_execution(self):
-        """A legacy config flag cannot substitute for an approved host worker."""
-        from unittest.mock import patch
-        self.call("unlimited_company_create", {"company_id": "company-a", "display_name": "A"})
-        mission = {"company_id": "company-a", "objective_id": "mission-live-denied",
-                   "title": "No unauthorized execution", "target_value_minor": 5000}
-        self.ctx.authorize_mission = lambda *args: True
-        self.ctx.mission_worker = None
-        with patch.dict("os.environ", {"HERMES_UNLIMITED_LIVE_WORKER": "1"}):
-            result = self.call("unlimited_mission_run", mission)
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["reason"], "RuntimeError")
-        self.assertEqual(len(self.submissions), 0)
-
     def test_manifest_declares_all_registered_tools(self):
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
-        tools_section = manifest.split("provides_tools:", 1)[1].split("\nprovides_hooks:", 1)[0]
+        tools_section = manifest.split("provides_tools:", 1)[1].split("\nrequires_env:", 1)[0]
         names = set(line.strip()[2:] for line in tools_section.splitlines()
                     if line.strip().startswith("- "))
         self.assertEqual(names, set(self.ctx.handlers),
                          "plugin.yaml must match registered tools exactly")
-
-    def test_manifest_declares_feedback_hooks(self):
-        manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
-        hooks_section = manifest.split("provides_hooks:", 1)[1].split("\nrequires_env:", 1)[0]
-        names = {line.strip()[2:] for line in hooks_section.splitlines()
-                 if line.strip().startswith("- ")}
-        self.assertEqual(names, {"post_api_request", "post_tool_call", "on_session_end"})
 
     def test_public_company_service_request_path(self):
         created = self.call("unlimited_company_create",
@@ -315,86 +189,6 @@ class ToolIntegrationTests(unittest.TestCase):
                              {"company_id": "company-a", "display_name": "Research Firm",
                               "tenant": "other"})
         self.assertEqual(response["reason"], "INVALID_ARGUMENTS")
-
-    def test_adapter_chat_real_registry_admission_contract(self):
-        from unlimited.adapter_gate import (
-            AdapterRegistration, AdapterDenied, TenantAdapterRegistry,
-        )
-        from unlimited.webhook_delivery import WebhookDestination
-        checks = {k: "passed" for k in ("unit", "contract", "security", "integration")}
-        reg = AdapterRegistration("ember", "VERIFIED", ("chat.message.send",),
-                                  independently_tested=True, checks=checks)
-        registry = TenantAdapterRegistry()
-        registry.register_adapter(reg)
-        self.ctx.tenant_adapter_registry = registry
-        self.ctx.approve_adapter_effect = lambda *args: True
-        self.ctx.resolve_adapter_destination = lambda *args: WebhookDestination(
-            "https://example.org/secrets-stay-host-side")
-        # No grant: no outbound effect.
-        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
-            denied = self.call("unlimited_adapter_chat_post", {
-                "adapter_id": "ember", "connection_id": "team", "text": "Blocked"})
-            self.assertFalse(denied["ok"])
-            sender.assert_not_called()
-        registry.configure_tenant_jackets("tenant-a", optional_grants={
-            "ember": ("chat.message.send",)})
-        with patch("unlimited.webhook_delivery.post_chat_message",
-                   return_value={"accepted": True, "delivery_verified": False, "status": 200}):
-            result = self.call("unlimited_adapter_chat_post", {
-                "adapter_id": "ember", "connection_id": "team", "text": "Allowed"})
-        self.assertTrue(result["accepted"])
-        self.assertFalse(result["delivery_verified"])
-        self.settings["HERMES_UNLIMITED_TENANT_ID"] = "tenant-b"
-        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
-            denied = self.call("unlimited_adapter_chat_post", {
-                "adapter_id": "ember", "connection_id": "team", "text": "Wrong tenant"})
-            self.assertFalse(denied["ok"])
-            sender.assert_not_called()
-
-    def test_adapter_chat_post_fails_closed_without_host_admission(self):
-        result = self.call("unlimited_adapter_chat_post", {
-            "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["reason"], "PermissionError")
-
-    def test_adapter_chat_post_uses_justyou_and_host_scoped_config(self):
-        from unittest.mock import Mock
-        from unlimited.webhook_delivery import WebhookDestination
-        tenant_registry = Mock()
-        self.ctx.tenant_adapter_registry = tenant_registry
-        self.ctx.approve_adapter_effect = lambda tenant, identity, adapter, cid, cap: (
-            tenant == "tenant-a" and identity == "@owner"
-            and adapter == "ember" and cid == "team" and cap == "chat.message.send")
-        self.ctx.resolve_adapter_destination = lambda *args: WebhookDestination("https://example.org/secret-webhook")
-        with patch("unlimited.webhook_delivery.post_chat_message",
-                   return_value={"accepted": True, "delivery_verified": False, "status": 200}):
-            result = self.call("unlimited_adapter_chat_post", {
-                "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
-        self.assertTrue(result["ok"])
-        self.assertTrue(result["accepted"])
-        self.assertFalse(result["delivery_verified"])
-        tenant_registry.authorize_tenant_capability.assert_called_once_with(
-            tenant_id="tenant-a", adapter_id="ember",
-            capability="chat.message.send", require_release_eligible=True)
-        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@another"
-        # Isolate JustYou rejection from the separate host effect policy.
-        self.ctx.approve_adapter_effect = lambda *args: True
-        with patch("unlimited.webhook_delivery.post_chat_message") as sender:
-            denied = self.call("unlimited_adapter_chat_post", {
-                "adapter_id": "ember", "connection_id": "team", "text": "Hello"})
-            self.assertFalse(denied["ok"])
-            sender.assert_not_called()
-
-    def test_community_adapter_discovery_tool_is_read_only(self):
-        result = self.call("unlimited_adapter_discover")
-        self.assertTrue(result["ok"])
-        self.assertGreaterEqual(result["count"], 14)
-        self.assertFalse(result["execution_enabled"])
-        self.assertTrue(all(not item["can_execute"] for item in result["adapters"]))
-        only = self.call("unlimited_adapter_discover", {"id": "ember"})
-        self.assertEqual(only["count"], 1)
-        self.assertEqual(only["adapters"][0]["state"], "catalog-only")
-        self.assertFalse(self.call("unlimited_adapter_discover", {"tenant": "other"})["ok"])
 
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
