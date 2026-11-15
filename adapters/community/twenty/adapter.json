@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "twenty",
+  "name": "Twenty CRM",
+  "version": "0.1.0",
+  "description": "Open CRM option for people, companies, opportunities and workspace-specific objects; API access requires tenant authorization",
+  "upstream_url": "https://github.com/twentyhq/twenty",
+  "documentation_url": "https://docs.twenty.com/developers/extend/api",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "crm.people.read",
+    "crm.company.read",
+    "crm.opportunity.read",
+    "crm.record.write"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
