@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "erpnext",
+  "name": "ERPNext",
+  "version": "0.1.0",
+  "description": "Open ERP option for invoices, accounting and procurement; no live financial actions authorized by discovery",
+  "upstream_url": "https://github.com/frappe/erpnext",
+  "documentation_url": "https://docs.frappe.io/framework/user/en/api/rest",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "erp.invoice.read",
+    "erp.invoice.write",
+    "erp.purchase.read"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
