@@ -45,7 +45,7 @@ class ToolIntegrationTests(unittest.TestCase):
                                                   resolved_version=1, status="RESOLVED")
         self.ctx = SimpleNamespace(profile_name="role-a", justyou_session_store=SessionStore(),
                                    justyou_resolver=Resolver(), handlers={})
-        def register_tool(name, toolset, schema, handler):
+        def register_tool(name, toolset, schema, handler, check_fn=None):
             self.ctx.handlers[name] = handler
         self.ctx.register_tool = register_tool
         self.ctx.get_config = lambda name, default="": settings.get(name, default)
