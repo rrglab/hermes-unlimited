@@ -3,8 +3,6 @@
 Requires trusted JustYou verification via ProviderStore; never accepts an agent's
 self-report as independent verification or as a monetary benefit claim.
 """
-import json
-import sqlite3
 from decimal import Decimal
 from human_oversight_economics import DeliveryEconomics, OversightEntry, OversightPhase, evaluate
 
@@ -38,7 +36,10 @@ class OversightLedger:
     def record(self, provider, tenant, company, request, entry_id, phase, minutes, hourly_rate, identity):
         self._request(provider, tenant, company, request, identity)
         self.store._ids(entry_id)
-        entry = OversightEntry(request, OversightPhase(phase), Decimal(str(minutes)), Decimal(str(hourly_rate)))
+        try:
+            entry = OversightEntry(request, OversightPhase(phase), Decimal(str(minutes)), Decimal(str(hourly_rate)))
+        except (ArithmeticError, ValueError) as exc:
+            raise ValueError("OVERSIGHT_INVALID") from exc
         with self.store._db() as db:
             db.execute("""INSERT INTO oversight_entries VALUES(?,?,?,?,?,?,?,?)""",
                        (provider, tenant, company, request, entry_id, entry.phase.value,
@@ -47,7 +48,10 @@ class OversightLedger:
 
     def record_costs(self, provider, tenant, company, request, ai_cost, recovery_cost, identity):
         self._request(provider, tenant, company, request, identity)
-        ai, recovery = Decimal(str(ai_cost)), Decimal(str(recovery_cost))
+        try:
+            ai, recovery = Decimal(str(ai_cost)), Decimal(str(recovery_cost))
+        except ArithmeticError as exc:
+            raise ValueError("COST_INVALID") from exc
         if not ai.is_finite() or not recovery.is_finite() or min(ai, recovery) < 0:
             raise ValueError("COST_INVALID")
         with self.store._db() as db:
