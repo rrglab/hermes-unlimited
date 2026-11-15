@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "chatwoot",
+  "name": "Chatwoot",
+  "version": "0.1.0",
+  "description": "Open customer support inbox and conversation management option",
+  "upstream_url": "https://github.com/chatwoot/chatwoot",
+  "documentation_url": "https://developers.chatwoot.com/api-reference/introduction",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "support.conversation.read",
+    "support.message.write"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
