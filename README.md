@@ -268,3 +268,9 @@ successful offline test does not establish a live GPU workflow or finished media
 The GitHub hero is [`assets/brand/github-banner.svg`](assets/brand/github-banner.svg). The official product lockup is [`assets/brand/wordmark.svg`](assets/brand/wordmark.svg). Use [`assets/brand/icon.svg`](assets/brand/icon.svg) for app icons and [`assets/brand/infinity.svg`](assets/brand/infinity.svg) where the standalone infinity mark is needed.
 
 Brand colors: midnight `#0B0F17`, champagne gold `#C9A76A`, and ivory `#F8F9F5`. The product name is **Hermes Unlimited**; the endorsement is **by REHT**. These assets are product branding, not a claim that optional integrations are included in this repository.
+
+## Digital workforce integration boundaries
+
+Hermes Unlimited is a **consumer and orchestration surface**, not a second system of record for professional qualification, developmental history or execution authority. Integrations may reference a model/agent **Passport** (artifact provenance and evaluation evidence), a domain-specific professional qualification (Shu/Ha/Ri, Tatsujin or Steward), developmental capability evidence, and a **Work Permit** (a live, scoped mandate administered by an external authority system such as JACKETS). These concepts are distinct: qualifications and Passports never themselves grant runtime permissions. Existing Hermes tools and integrations should be reused before creating new components.
+
+These are integration boundaries, **not claims of shipped Passport, professional qualification, JACKETS or consequence-time authorization adapters in the public core**. Provider integrations need separately verified route coverage and effect evidence.
