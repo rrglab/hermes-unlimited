@@ -28,6 +28,19 @@ class LedgerTests(unittest.TestCase):
         self.assertIsNone(result["net_value"])
         self.assertEqual(result["verification_status"], "UNVERIFIED")
 
+    def test_nan_rejected(self):
+        with self.assertRaises(ValueError):
+            self.ledger.record("provider","tenant","company","request","entry-nan",
+                               "pre_control","NaN","60","identity")
+        with self.assertRaises(ValueError):
+            self.ledger.record_costs("provider","tenant","company","request",
+                                     "Infinity","0","identity")
+
+    def test_cost_report_is_tenant_scoped(self):
+        self.ledger.record_costs("provider","tenant","company","request","2","3","identity")
+        with self.assertRaises(ValueError):
+            self.ledger.report("provider","tenant","company","other-request","identity")
+
     def test_wrong_identity_rejected(self):
         with self.assertRaises(PermissionError):
             self.ledger.report("provider","tenant","company","request","imposter")
