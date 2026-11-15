@@ -9,7 +9,7 @@
 
 **Don't hire another bot. Launch a company.**
 
-Create AI-native companies for yourself and your customers. Turn business goals into scoped missions, coordinate workers, evaluate economics, learn from outcomes, and publish repeatable services.
+Create AI-native companies for yourself and your customers. Publish services. Receive orders. Put Hermes workers to work. Retrieve the result.
 
 **[Explore the product → valoresearch.org/hermes-unlimited](https://valoresearch.org/hermes-unlimited/)** · **[Discuss a provider pilot →](mailto:njaal@valoresearch.org?subject=Hermes%20Unlimited%20provider%20pilot)**
 
@@ -34,74 +34,25 @@ Create AI-native companies for yourself and your customers. Turn business goals 
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
-## Names and acronyms
+## Public source and planned migration
 
-Hermes Unlimited builds on **Hermes Agent**, the open-source agent runtime from NousResearch. The names below describe components or interfaces; they are not all separate agents, products, or shipped integrations.
+The original [Hermes Agent hackathon catalog submission](https://github.com/NousResearch/hermes-agent/pull/153503) was submitted by `nsolland` and currently uses [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) as its public source. [`rrglab/hermes-unlimited`](https://github.com/rrglab/hermes-unlimited) is the public REHT Research Group mirror and the **intended future home**. Both repositories are kept in sync for the released plugin core during this transition. A future migration of the catalog source to `rrglab` will be coordinated explicitly, with a new verified commit pin; this statement is not a claim that the catalog has already migrated.
 
-| Term | Meaning in this project |
-| --- | --- |
-| **AGY** | **Autonomous Goal Engine**: goal-oriented orchestration that turns objectives into bounded missions, coordinates execution, tracks progress, and learns from verified outcomes. The company features are applications of this goal engine. |
-| **REHT** | **REHT Research Group**, the organization publishing Hermes Unlimited. REHT is used as the group's name here, not as an expanded technical acronym. |
-| **CAVO** | **Chief AI Value Officer**: the function of evaluating AI costs, expected value, budgets, and return on investment. “CAVO economics” means the software calculations supporting that function, not a human executive role supplied by the plugin. |
-| **A2UI** | **Agent-to-User Interface**: structured, agent-facing data rendered as user interface surfaces. Current bundled surfaces are read-only and limited in scope. |
-| **JustYou** | The identity and signed-session verification system required for trusted provider/tenant context. It is a product name, not an acronym. |
-| **The Thread** | Optional external, durable agent/conversation memory integration; distinct from the embedded Company Memory. |
-| **AI** | **Artificial Intelligence**. |
-| **OS** | **Operating System**; “Company OS” is the company-management logic, not a replacement for the host operating system. |
-| **CLI** | **Command-Line Interface**, such as the `hermes` terminal command. |
-| **API** | **Application Programming Interface**, a contract through which software tools communicate. |
-| **MCP** | **Model Context Protocol**, a standard interface for tools and context. |
-| **UI** | **User Interface**, the human-facing controls and views. |
-| **ROI** | **Return on Investment**; estimates in this repository are not measured customer returns. |
-| **SLA** | **Service Level Agreement**, used for constraints and targets rather than guaranteed service performance. |
-| **SMTP** | **Simple Mail Transfer Protocol**, used by the optional, approval-gated email connection. |
-| **SQLite** | An embedded relational database engine; its name is not an acronym. |
-| **CI** | **Continuous Integration**, the automated test checks on proposed changes. |
-| **CodeQL** | GitHub's code-analysis technology; a product name rather than an expanded acronym. |
-| **SHA** | **Secure Hash Algorithm**, used here to identify pinned Git commits or content. |
-| **PR** | **Pull Request**, a proposed change reviewed before merging. |
 
-**Scope note:** A term appearing in the glossary does not imply that its live integration is included or production-verified. See the release table and [Boundary](#boundary).
+## What works
 
-## Release status — 0.1.0-alpha.8
+- Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
+- Provider/tenant-scoped company and service registry backed by SQLite.
+- Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
+- JustYou session + signed Hermes profile binding verifier, with no token files bundled.
+- Native Hermes Kanban task submission and scoped state reader, including request-to-task result association.
+- Fail-closed checks for missing identity, mismatched profile, tenant boundaries and duplicate request IDs.
 
-**This repository (`rrglab/hermes-unlimited`) is the canonical public code release of Hermes Unlimited by REHT Research Group.** The AGY Autonomous Company Engine was merged into public `main` in [PR #16](https://github.com/rrglab/hermes-unlimited/pull/16) at commit [`deb7cc91`](https://github.com/rrglab/hermes-unlimited/commit/deb7cc91fd9c1dca1fbd858defaac532eb01d98e). The current public release extends the AGY core with a read-only community adapter directory and a bounded, host-approved chat webhook transport. Development remains private; published code is scoped, tested, and labeled with its actual operational maturity.
-
-| Release | Source / purpose | What it contains | Distribution |
-| --- | --- | --- | --- |
-| **0.1.0-alpha.8** | `rrglab/hermes-unlimited` public source | Alpha.7 plus read-only native Hermes tool `unlimited_junior_discovery` (20 registered tools total); safely discovers installed tool schemas and syncs provider/tenant-scoped schema fingerprints to the host registry. Produces `DRAFT_UNVERIFIED` junior specs; no model qualification or activation | Public source; **not yet approved or pinned in Nous catalog** |
-| **0.1.0-alpha.7** | `rrglab/hermes-unlimited` public source | Alpha.6 core plus free community adapter discovery and host-approved Slack-compatible outbound chat transport; 19 registered Hermes tools and three feedback hooks | Public source; **not yet approved or pinned in Nous catalog** |
-| **0.1.0-alpha.6** | `rrglab/hermes-unlimited@9836141dedf12239e5558d4ccd6be910f657f34f` | AGY Company OS, Mission Engine, CAVO economics, Company Memory, Service Factory, A2UI, 17 native tools and three feedback hooks | Submitted for Nous catalog review in [PR #155722](https://github.com/NousResearch/hermes-agent/pull/155722); **not yet merged** |
-| **0.1.0-alpha.5** | Earlier `rrglab` manifest version | Transitional public core before full AGY merge | Superseded |
-| **0.1.0-alpha.4** | Original competition pin `nsolland/hermes-unlimited@09cd80374b994fa38abc5ed6b8904b98ac9b3554` | Bounded company/service/Kanban core with ten native tools | **Still pinned in the merged Nous plugin catalog** |
-
-The [original hackathon catalog PR #153503](https://github.com/NousResearch/hermes-agent/pull/153503) merged on 13 November 2026 and remains pinned to `nsolland` alpha.4. [PR #155722](https://github.com/NousResearch/hermes-agent/pull/155722) proposes migrating the **existing** catalog entry to `rrglab` alpha.6 (17 tools, three hooks). Alpha.7 is a subsequent public-source release candidate with two additional adapter tools; it is **not** part of PR #155722. Catalog availability changes only after an independently reviewed and merged SHA-bump PR. Do not equate public GitHub source availability with catalog installation.
-
-### Native Tool → Agent discovery (alpha.8)
-
-The `unlimited_junior_discovery` native tool now exposes `discover` (read-only proposals) and `sync` (tenant-scoped persisted tool fingerprints). Both require a verified JustYou profile. For `hermes`, schemas come from Hermes's actual registry; `connector` uses native connector search and the user's Hermes-managed account; MCP/OpenAPI schemas must be supplied by a trusted Hermes host callback. Generated candidates are *drafts only* with no credentials, execution authority or qualified model. Neither operation installs or invokes the junior agent, and `sync` persists only schema digests, not account content. See [Tool-to-Agent documentation](docs/TOOL_TO_AGENT_PIPELINE.md).
-
-### Experimental Tool → Agent pipeline (public source)
-
-A source-only, standalone [Tool → Capability → Junior Agent library](docs/TOOL_TO_AGENT_PIPELINE.md) is included for testing and community contributions. It normalizes Hermes/MCP/connector/OpenAPI tool definitions, generates one-tool draft Junior profiles, suggests test contracts, and detects contract changes through optional tenant-scoped SQLite fingerprints. It **does not install agents, connect accounts, choose models, or grant tool permissions**. The library remains accessible independently of the single native discovery tool. The upstream Nous catalog pin is unchanged.
-
-### What is implemented in the public core
-
-- **Company OS / Mission Engine:** company charters, goal alignment, objective decomposition, scoped mission processing, retry and recovery controls. Hermes native mission execution requires explicit trusted-host authorization and a non-fixture worker; it fails closed without them.
-- **CAVO economics:** routing, expected-value/cost/ROI estimates, budget and SLA checks. Offline estimates are not measured customer ROI.
-- **Company Memory:** durable tenant-scoped experience with distinct `VERIFIED_OUTCOME` and `RECORDED_UNVERIFIED` classifications. The Thread is an optional external memory integration, not this embedded store.
-- **Service Factory:** promotes qualifying verified, positive-value mission outputs into reusable service blueprints and catalog entries.
-- **Customer and service lifecycle:** SQLite company registry, priced service publishing, durable request intake, per-tenant Kanban boards, idempotent dispatch/recovery and scoped result reads.
-- **Connections and effects:** tenant-bound SMTP/Stripe connection contracts with vault references, explicit effect approval and non-delivery/non-settlement receipt semantics; there is no claim of live customer billing or payment capture.
-- **Trust and adapters:** mandatory JustYou signed session/profile verification; optional tenant-scoped adapter eligibility; no receipt or model-generated claim authorizes an external effect by itself.
-- **Captain's Bridge / A2UI:** read-only company, request, mission and readiness surfaces, with a scoped local bridge. This is not yet a complete customer-facing operations cockpit.
-- **Hermes worker interface:** mission execution requires an explicitly host-provided worker and independent verifier. The plugin does not bootstrap Hermes internals or provide autonomous provider credentials; offline tests do **not** verify external provider operation.
-
-**Evidence:** Initial AGY [PR #16](https://github.com/rrglab/hermes-unlimited/pull/16) passed Python 3.11–3.13 and CodeQL checks. Subsequent hardening [#22](https://github.com/rrglab/hermes-unlimited/pull/22), upstream catalog validation [#23](https://github.com/rrglab/hermes-unlimited/pull/23), and private-runtime removal [#24](https://github.com/rrglab/hermes-unlimited/pull/24) were merged. Hosted Hermes validation for alpha.6 passed capability matching, security scan and no-core-override checks. Alpha.7 retains its own CI/review requirement; earlier green results do not prove subsequent code. These results do not establish productive customer outcomes. See [AGY scope and limits](docs/AGY_COMPANY_ENGINE_SCOPE.md).
+The native tool handles for company creation, service publishing and requests are functional with a trusted JustYou verifier supplied by the Hermes host.
 
 ## Green Core — live acceptance (11 November 2026)
 
-A bounded, synthetic end-to-end acceptance run on the **Acer Hermes Unlimited runtime** completed successfully. This validates a historical Acer runtime customer-flow integration. The AGY core is now public, but the historical acceptance is **not** evidence that the current public release has reproduced the same real-worker integration.
+A bounded, synthetic end-to-end acceptance run on the **Acer Hermes Unlimited runtime** completed successfully. This validates the installed customer-flow integration; the public repository's smaller native plugin core is a separate implementation and is **not** claimed to contain every runtime component exercised below.
 
 - Company `acceptance-1111` was created from the support-desk template with three isolated Hermes profiles (triage, responder, knowledge).
 - Three company-scoped JustYou identities were verified; the registry, session renewer and learning timer were active.
@@ -109,23 +60,23 @@ A bounded, synthetic end-to-end acceptance run on the **Acer Hermes Unlimited ru
 - The result was harvested into company-scoped memory once. A subsequent harvest recognized the duplicate without creating a second record.
 - The learned entry was classified `RECORDED_UNVERIFIED`: it is an agent self-report, **not independently verified evidence**. No external customer contact or external effect was performed.
 
-**Historical acceptance verdict:** GREEN for synthetic company creation → identity isolation → task execution → handoff → scoped learning capture. **Still open:** independent output verification, externally reproducible customer onboarding and production readiness. The runtime acceptance is not a substitute for green local tests against the public repository's exact commit.
+**Acceptance verdict:** GREEN for synthetic company creation → identity isolation → task execution → handoff → scoped learning capture. **Still open:** independent output verification, externally reproducible customer onboarding and production readiness. The runtime acceptance is not a substitute for green local tests against the public repository's exact commit.
 
-## Product roadmap and broader platform
+## Future developments
 
 **Our direction: AI-native companies as a service.**
 
-The public AGY core now implements several of the foundations below. The table describes the **broader product direction**; it does not claim that every integration or UI is shipped and production-verified.
+Hermes Unlimited is evolving from a native Hermes plugin into a platform where a provider can **create, operate, and scale AI-native companies for customers**—with people and agents working as one organization.
 
 | Area | What we are building toward |
 | --- | --- |
 | **Captain's Bridge** | One operating cockpit for companies, teams, missions, communications, customers, and results. |
 | **AI Crew** | Coordinated agent roles—helpers, specialists, routers, coordinators, and directors—with clear ownership and handoffs. |
-| **Mission Control** | Company OS and mission execution logic are implemented; production-scale orchestration and measurable customer outcomes remain open. |
-| **AI Bridge** | Model selection and economic routing logic are implemented; live multi-provider performance is not independently verified. |
-| **Company Memory** | Embedded tenant-scoped store is implemented; The Thread remains optional external integration. |
-| **Service Factory** | Reusable blueprints/catalog entries are implemented; externally verified customer delivery remains open. |
-| **Business Engine** | CAVO calculations are implemented; live billing, measured ROI and real settlement remain open. |
+| **Mission Control** | Goals that persist across sessions, task execution, attention management, retries, completion, and measurable outcomes. |
+| **AI Bridge** | Choice of models, providers, and routing strategies based on capability, latency, budget, and workload. |
+| **Company Memory** | Durable context and organizational learning, with optional integration of The Thread. |
+| **Service Factory** | Turn repeatable agent work into customer-facing services, intake, delivery, and reusable packages. |
+| **Business Engine** | Revenue, cost, AI ROI, billing, and continuous improvement of company economics. |
 | **Communications** | Customer and team interaction through supported phone, email, and messaging channels. |
 | **Integrations & add-ons** | Modular tools, virtual work environments, and optional governance or evidence capabilities. |
 
@@ -211,30 +162,20 @@ An initial Gemini-produced visual episode for *The Critics* was created outside 
 4. **Harvest outcomes** — collect deliverables, results, costs, and feedback.
 5. **Improve and scale** — reuse what works across customers, services, and companies.
 
-This is the **broader customer journey**, not an assertion that every external channel, real-world effect or operational integration is live. Refer to *What is implemented in the public core* and *Boundary* for the code/evidence distinction.
+This is the **product direction**, not a statement that every capability above is already shipped in this public repository. The native core and its current scope are described in *What works* and *Boundary* below.
 
-## Version and distribution policy
+## Native tools
 
-- **Public source:** `plugin.yaml` is the canonical version for this repository (`0.1.0-alpha.7`). Tool and hook counts refer to that file, not to an older catalog pin.
-- **Nous catalog:** installs remain pinned to reviewed commits. The approved entry is alpha.4; PR #155722 proposes alpha.6. Alpha.7 must receive a separate catalog review and exact SHA pin before it can be installed through `hermes plugins update hermes-unlimited`.
-- **Compatibility:** `requires_hermes: ">=0.21.5"` is a declared minimum, not proof of external provider availability. A provider must configure JustYou, tenant-isolated boards, and explicit host approvals.
-- **Maturity:** adapter discovery is metadata only. The chat-post adapter provides outbound delivery through an existing host-approved webhook; it is not a Slack/Ember agent, does not provide message readback and does not activate integrations automatically.
-
-## Native Hermes tools (19 declared in alpha.7)
-
-The tool registry in [`plugin.yaml`](plugin.yaml) is the authoritative install manifest. All operations are scoped by trusted Hermes provider, tenant and JustYou identity, not by model-supplied identity fields.
-
-| Area | Tools |
-| --- | --- |
-| Provider/company | `hermes_unlimited_status`, `unlimited_company_create`, `unlimited_company_list`, `unlimited_company_task`, `unlimited_company_result` |
-| Services/Kanban | `unlimited_service_publish`, `unlimited_service_request`, `unlimited_service_dispatch`, `unlimited_service_result` |
-| Autonomous missions | `unlimited_mission_run`, `unlimited_company_cycle`, `unlimited_economic_evaluate` |
-| Learning and production | `unlimited_memory_recall`, `unlimited_service_factory` |
-| Interface and review | `unlimited_a2ui_surface`, `unlimited_socratic_council` |
-| Connections | `unlimited_connection_manage` |
-| Community adapters | `unlimited_adapter_discover` (read-only metadata), `unlimited_adapter_chat_post` (host-approved outbound webhook) |
-
-The autonomous mission/cycle handlers require a trusted-host `authorize_mission` callback, a real host worker and an independent verifier/critic; missing capabilities are denied. The former in-process research adapter was excluded from the catalog-safe package; it remains recoverable from Git history before this release. Live execution must be supplied and authorized by the Hermes host. SMTP/Stripe effects are separately approval-gated. The Socratic Council is an advisory review, not an authority layer.
+- `hermes_unlimited_status`
+- `unlimited_company_create`
+- `unlimited_company_list`
+- `unlimited_service_dispatch`
+- `unlimited_service_result`
+- `unlimited_service_publish`
+- `unlimited_service_request`
+- `unlimited_company_task`
+- `unlimited_company_result`
+- `unlimited_a2ui_surface`
 
 ## Trusted profile setup
 
@@ -278,21 +219,23 @@ python3 -m unittest discover -s tests -v
 hermes plugins validate . --install-deps
 ```
 
-Local green tests remain canonical. Public GitHub Actions run offline unit tests on Python 3.11–3.13, CodeQL, and Hermes' upstream plugin catalog validator on supported Python 3.14. CI results are advisory and do not attest to live Hermes dispatch,
+Local green tests remain canonical. Public GitHub Actions independently run
+offline unit tests on Python 3.11–3.13 and CodeQL security analysis on pull
+requests. CI results are advisory and do not attest to live Hermes dispatch,
 customer effects, or production readiness. Dependabot checks action updates.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The 19 declared tools do not send mandatory telemetry. Host-provisioned workers and explicitly authorized SMTP/Stripe adapters may contact selected external services; ComfyUI remains an optional, unregistered client. Network calls may incur external provider charges.
+- **Network:** The ten registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
 - **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
 - **Approvals:** No auto-approval, disabling of Hermes guards or core override. Missing authorization fails closed. The plugin may submit work only after trusted JustYou verification.
-- **Limits:** No production-verified payment settlement or customer fulfillment is claimed. Verified local logic is distinct from live external delivery and measured business value. A Hermes task marked `done` is not proof of customer acceptance.
+- **Limits:** No live payment settlement, no independently attested worker effects and no claim of production customer fulfillment. A Hermes task marked `done` is not proof of customer acceptance.
 
 ## Boundary
 
-Hermes owns the base agent runtime, channels, scheduler and Kanban execution. JustYou supplies verified identity. **AGY is the Hermes Unlimited functional company core**: Company OS, missions, economic decisions, embedded Company Memory, service production and evidence-aware results. Task state and internal receipts are not independent authority. The Thread external memory, full Captain's Bridge product UI, optional Jackets integrations, Veritas and commercial live backends remain separate, optional or partially implemented; their presence must not be inferred from the bundled core.
+Hermes owns the worker, channels, scheduler and Kanban execution. JustYou supplies verified identity. Unlimited supplies provider/customer company and service semantics, task routing and result retrieval. Task state is not independent evidence. Company Memory (The Thread), Captain's Bridge, Jackets, Veritas, model routing and commercial optimization are optional integrations and are not bundled here.
 
 See `docs/ARCHITECTURE.md`. The public code is Apache-2.0 licensed; private customer data and separately licensed extensions are not included.
 
@@ -325,64 +268,3 @@ successful offline test does not establish a live GPU workflow or finished media
 The GitHub hero is [`assets/brand/github-banner.svg`](assets/brand/github-banner.svg). The official product lockup is [`assets/brand/wordmark.svg`](assets/brand/wordmark.svg). Use [`assets/brand/icon.svg`](assets/brand/icon.svg) for app icons and [`assets/brand/infinity.svg`](assets/brand/infinity.svg) where the standalone infinity mark is needed.
 
 Brand colors: midnight `#0B0F17`, champagne gold `#C9A76A`, and ivory `#F8F9F5`. The product name is **Hermes Unlimited**; the endorsement is **by REHT**. These assets are product branding, not a claim that optional integrations are included in this repository.
-
-
-## Free community adapter directory (alpha.7 preview)
-
-Hermes Unlimited can index community-provided adapters for existing services
-without reimplementing those services. The first entries cover Ember, Slack,
-GitHub, Cloudflare, Outlook, Matrix, Zulip and Mattermost.
-
-Commands:
-    python -m unlimited.community_adapters list
-    python -m unlimited.community_adapters inspect ember
-    python -m unlimited.community_adapters scaffold my-service --directory adapters/community
-
-The native Hermes tool `unlimited_adapter_discover` is read-only. Starter entries
-are catalog-only, not working service connections. Contributions and discovery
-are free; provider subscriptions and API usage may have their own costs.
-JustYou remains mandatory and production admission is controlled by the
-existing tenant-scoped host adapter gate.
-See adapters/community/README.md for contributions.
-
-
-A thin outbound Slack-compatible webhook transport is also implemented as
-`unlimited_adapter_chat_post`, using existing Hermes JustYou identity,
-tenant-scoped admission and host-managed destinations. It does not authorize
-itself, run Ember/Slack, or claim message readback. The default community
-catalog entries remain non-executable until independently reviewed and
-approved by the existing host adapter gate.
-
-
-### Socratic Council — real Hermes councillors (opt-in)
-
-The `unlimited_socratic_council` tool runs **four distinct deliberation seats**
-(`explorer`, `builder`, `economist`, `skeptic`) and a separate `chair`,
-using existing Hermes CLI/model subscriptions. It performs independent first
-opinions, anonymous cross-critique and dissent-preserving chair synthesis.
-This is deliberation only; it never authorizes or executes business actions.
-
-Set the plugin's `HERMES_UNLIMITED_COUNCIL_MODELS` configuration to a JSON string
-with **all five** provider/model selections, for example:
-
-```json
-{
-  "explorer": {"provider": "openai-codex", "model": "gpt-5.5"},
-  "builder": {"provider": "openai-codex", "model": "gpt-5.5"},
-  "economist": {"provider": "openrouter", "model": "deepseek/deepseek-v4-pro"},
-  "skeptic": {"provider": "openrouter", "model": "deepseek/deepseek-v4-pro"},
-  "chair": {"provider": "openai-codex", "model": "gpt-5.5"}
-}
-```
-
-These are illustrative **model slots**, not an activation or guarantee that
-those providers/models are available to a given profile. Config contains no
-tokens, endpoints, or passwords. Calls use the host's Hermes profile, incur its
-normal usage costs, and run in Hermes safe mode (no plugins/MCP/custom\ntools) with bounded turn/time. Safe mode ignores user config and may make\nprofile-specific providers unavailable; in that case the council fails closed.
-For a real panel, each seat must be independently evaluated; different roles
-on the same model do **not** imply model-family independence.
-
-Without a complete seat configuration (or five host-supplied callable seats),
-the tool returns `COUNCIL_UNAVAILABLE` rather than manufacturing opinions.
-A model failure also fails the round. A council synthesis is a recommendation,
-not independent factual proof, and dissent and uncertainty remain visible.

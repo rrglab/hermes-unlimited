@@ -1,13 +1,10 @@
 name: hermes-unlimited
 kind: standalone
-version: 0.1.0-alpha.8
+version: 0.1.0-alpha.4
 description: Native Hermes public core for provider-operated AI-native companies
 requires_hermes: ">=0.21.5"
 provides_tools:
   - hermes_unlimited_status
-  - unlimited_adapter_discover
-  - unlimited_junior_discovery
-  - unlimited_adapter_chat_post
   - unlimited_company_task
   - unlimited_company_result
   - unlimited_company_create
@@ -17,17 +14,6 @@ provides_tools:
   - unlimited_a2ui_surface
   - unlimited_service_dispatch
   - unlimited_service_result
-  - unlimited_connection_manage
-  - unlimited_mission_run
-  - unlimited_economic_evaluate
-  - unlimited_memory_recall
-  - unlimited_service_factory
-  - unlimited_socratic_council
-  - unlimited_company_cycle
-provides_hooks:
-  - post_api_request
-  - post_tool_call
-  - on_session_end
 
 requires_env:
   - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
@@ -41,7 +27,6 @@ config_schema:
   HERMES_UNLIMITED_JUSTYOU_IDENTITY: {type: str, default: "", description: "JustYou identity"}
   HERMES_UNLIMITED_REGISTRY_DB: {type: str, default: "", description: "SQLite registry path"}
   HERMES_UNLIMITED_HERMES_CLI: {type: str, default: "hermes", description: "Hermes CLI path"}
-  HERMES_UNLIMITED_COUNCIL_MODELS: {type: str, default: "", description: "JSON with provider/model for explorer, builder, economist, skeptic and chair; no credentials"}
   HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL: {type: str, default: "", description: "Loopback JustYou validator URL"}
   JUSTYOU_BINDINGS_FILE: {type: str, default: "", description: "Private signed binding cache path"}
   JUSTYOU_AUTHORITY_KEY_FILE: {type: str, default: "", description: "Public authority verifier key file"}
