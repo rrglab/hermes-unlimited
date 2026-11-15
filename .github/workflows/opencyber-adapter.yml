@@ -1,0 +1,23 @@
+name: OpenCyber adapter (offline)
+on:
+  pull_request:
+    paths:
+      - 'integrations/opencyber/**'
+      - '.github/workflows/opencyber-adapter.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'integrations/opencyber/**'
+      - '.github/workflows/opencyber-adapter.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s integrations/opencyber -p 'test_*.py' -v
