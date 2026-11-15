@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "plane",
+  "name": "Plane",
+  "version": "0.1.0",
+  "description": "Open project and issue tracking option; reuse existing APIs and MCP tools where available",
+  "upstream_url": "https://github.com/makeplane/plane",
+  "documentation_url": "https://developers.plane.so/api-reference/introduction",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "project.issue.read",
+    "project.issue.write"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
