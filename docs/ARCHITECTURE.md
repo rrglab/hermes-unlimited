@@ -43,3 +43,12 @@ Marketplace, multi-provider federation, enterprise governance add-ons, large-sca
 
 ## Explicit non-goals
 Not a Hermes fork, one bespoke managed company, a replacement identity provider, a mandatory governance suite or a generic background autonomous worker.
+
+
+## Optional OpenShell isolation and Nebius compute
+
+OpenShell is **not** a new Unlimited authorization provider. The canonical technical transport is maintained in `nsolland/valo-gateway` (PR #111, merged 2026-11-15). It must be invoked from a separately deployed and authorized `ValoGateway` after genuine REHT clearance; this public plugin contains no OpenShell CLI dependency, provider credentials, direct shell execution, or permission to create execution permits. JustYou verifies caller identity and tenant binding, not REHT effect authority. Veritas independently records verified external outcomes; an OpenShell sandbox log or local receipt is not a Veritas proof.
+
+A future host integration can pass a verified tenant-scoped request to a separately configured Gateway deployment, which in turn selects a fixed OpenShell sandbox and effect program. A host operator, not the user payload, must pin the gateway profile, sandbox, executable and target capability. Native Hermes Kanban tasks are not execution permits. No direct effect path from Unlimited tools to OpenShell CLI is registered.
+
+Nebius is listed only as an optional infrastructure host for an OpenShell-capable runtime. Deploying an OpenShell Gateway on Nebius does not change JustYou/REHT/ValoGateway/Veritas ownership, and this catalog entry is **not** evidence that any Nebius instance or credentials have been provisioned or tested. Both integrations advertise `can_execute=False` until an external live qualification validates non-bypass, external effect readback, durable revocation/replay and signed evidence.
