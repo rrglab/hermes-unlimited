@@ -231,7 +231,7 @@ class ToolIntegrationTests(unittest.TestCase):
         local = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"hermes_unlimited"})
         self.assertEqual(local["source"], "LOCAL_PLUGIN_DECLARATION_ONLY")
         self.assertFalse(local["execution_authorized"])
-        self.assertEqual(len(local["capabilities"]),15)  # excludes this discovery tool
+        self.assertEqual(len(local["capabilities"]), len(self.ctx.handlers)-1)  # excludes this discovery tool
         self.assertTrue(all(x["effect"] == "unknown" and not x["availability_verified"] for x in local["capabilities"]))
         local_proposal = self.call("unlimited_specialist_factory", {"operation":"propose", "toolset":"hermes_unlimited",
                     "objective":"Review local catalog", "selected_tools":["unlimited_company_list"]})
@@ -257,6 +257,29 @@ class ToolIntegrationTests(unittest.TestCase):
         self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@forged"
         denied_identity = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns"})
         self.assertFalse(denied_identity["ok"])
+
+    def test_economic_scenario_handler_no_false_authority(self):
+        self.call("unlimited_company_create",{"company_id":"company-a", "display_name":"A"})
+        self.call("unlimited_service_publish",{"company_id":"company-a", "service_id":"brief",
+             "title":"Brief", "price_minor":1000, "currency":"NOK"})
+        self.call("unlimited_service_request",{"company_id":"company-a", "service_id":"brief",
+             "request_id":"req-1", "payload":{}})
+        args = {"company_id":"company-a", "request_id":"req-1", "scenario_cap":"25"}
+        missing=self.call("unlimited_economic_evaluate",args)
+        self.assertEqual(missing["comparison"],"INSUFFICIENT_COST_INPUT")
+        self.assertIsNone(missing["within_scenario_cap"])
+        self.call("unlimited_oversight_costs",{"company_id":"company-a", "request_id":"req-1",
+             "ai_cost":"12", "recovery_cost":"8"})
+        result=self.call("unlimited_economic_evaluate",args)
+        self.assertEqual(result["comparison"],"MODEL_INPUT_WITHIN_CAP")
+        self.assertEqual(result["currency"],"NOK")
+        self.assertEqual(result["difference"],"5")
+        self.assertFalse(result["execution_authorized"])
+        self.assertFalse(result["independently_verified"])
+        self.assertIsNone(result["net_value"])
+        self.assertFalse(self.call("unlimited_economic_evaluate",dict(args, tenant="other"))["ok"])
+        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"]="@forged"
+        self.assertFalse(self.call("unlimited_economic_evaluate",args)["ok"])
 
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)

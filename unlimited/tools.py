@@ -81,6 +81,16 @@ SCHEMAS = (
             "required": ["operation", "toolset"], "additionalProperties": False},
     },
     {
+        "name": "unlimited_economic_evaluate",
+        "description": "Compare unverified recorded costs to a model-submitted scenario cap; advisory arithmetic only, not budget approval, ROI, or execution.",
+        "parameters": {"type": "object", "properties": {
+            "company_id": {"type": "string"},
+            "request_id": {"type": "string"},
+            "scenario_cap": {"type": "string"}},
+            "required": ["company_id", "request_id", "scenario_cap"],
+            "additionalProperties": False},
+    },
+    {
         "name": "unlimited_company_list",
         "description": "List only companies in the bound provider and customer tenant.",
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -212,6 +222,12 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                         registry, toolset=args["toolset"], operation=args["operation"],
                         objective=args.get("objective"), selected_tools=args.get("selected_tools"),
                         source=source)
+                elif name == "unlimited_economic_evaluate":
+                    from .economic_scenario import evaluate_cost_scenario
+                    from .oversight_ledger import OversightLedger
+                    out = evaluate_cost_scenario(
+                        OversightLedger(store), provider, tenant, args["company_id"],
+                        args["request_id"], identity, scenario_cap=args["scenario_cap"])
                 elif name == "unlimited_company_create":
                     out = store.create_company(provider, tenant, args["company_id"],
                                                args["display_name"], identity)
