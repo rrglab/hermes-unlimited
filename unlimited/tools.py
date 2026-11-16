@@ -71,6 +71,16 @@ SCHEMAS = (
             "required": ["company_id"], "additionalProperties": False},
     },
     {
+        "name": "unlimited_specialist_factory",
+        "description": "Discover host-reported tool definitions and draft specialist proposals; no verified access, effects or execution authority.",
+        "parameters": {"type": "object", "properties": {
+            "operation": {"type": "string", "enum": ["discover", "propose"]},
+            "toolset": {"type": "string"},
+            "objective": {"type": "string"},
+            "selected_tools": {"type": "array", "items": {"type": "string"}}},
+            "required": ["operation", "toolset"], "additionalProperties": False},
+    },
+    {
         "name": "unlimited_company_list",
         "description": "List only companies in the bound provider and customer tenant.",
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -184,6 +194,12 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                                           identity, task_kind=args.get("task_kind"),
                                           verified_only=args.get("verified_only", False),
                                           limit=args.get("limit", 5))
+                elif name == "unlimited_specialist_factory":
+                    from .specialist_discovery import inspect_host_registry
+                    out = inspect_host_registry(
+                        getattr(ctx, "tool_registry", None),
+                        toolset=args["toolset"], operation=args["operation"],
+                        objective=args.get("objective"), selected_tools=args.get("selected_tools"))
                 elif name == "unlimited_company_create":
                     out = store.create_company(provider, tenant, args["company_id"],
                                                args["display_name"], identity)

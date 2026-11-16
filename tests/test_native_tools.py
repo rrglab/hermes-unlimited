@@ -224,6 +224,31 @@ class ToolIntegrationTests(unittest.TestCase):
         self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"]="@other"
         self.assertFalse(self.call("unlimited_memory_recall", {"company_id":"company-a"})["ok"])
 
+    def test_specialist_factory_requires_host_registry_and_no_effects(self):
+        denied = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns"})
+        self.assertFalse(denied["ok"])
+        self.assertEqual(denied["reason"], "PermissionError")
+        class TrustedRegistry:
+            def get_all_tool_names(self): return ["dns_read", "dns_write", "other"]
+            def get_toolset_for_tool(self, name): return "dns" if name.startswith("dns_") else "other"
+            def get_definitions(self, names, quiet=False):
+                return [{"function": {"name": name, "parameters":
+                        {"type":"object", "properties":{}}}} for name in names]
+        self.ctx.tool_registry = TrustedRegistry()
+        result = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns"})
+        self.assertFalse(result["execution_authorized"])
+        self.assertTrue(all(cap["effect"] == "unknown" for cap in result["capabilities"]))
+        draft = self.call("unlimited_specialist_factory", {"operation":"propose", "toolset":"dns",
+                    "objective":"Evaluate records", "selected_tools":["dns_read"]})
+        self.assertEqual(draft["status"],"DRAFT_UNVERIFIED")
+        self.assertFalse(draft["execution_authorized"])
+        forged = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns",
+                           "tool_schemas":[{"name":"forged"}]})
+        self.assertFalse(forged["ok"])
+        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"] = "@forged"
+        denied_identity = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns"})
+        self.assertFalse(denied_identity["ok"])
+
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
         self.assertNotIn("unlimited_creative_result", self.ctx.handlers)
