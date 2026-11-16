@@ -35,7 +35,7 @@ SCHEMAS = (
     },
     {
         "name": "unlimited_oversight_record",
-        "description": "Record operator-reported oversight time against a scoped service request; not independent evidence.",
+        "description": "Record model-submitted unverified oversight time against a scoped service request in its currency; not independent evidence.",
         "parameters": {"type": "object", "properties": {
             "company_id": {"type": "string"}, "request_id": {"type": "string"},
             "entry_id": {"type": "string"},
@@ -46,7 +46,7 @@ SCHEMAS = (
     },
     {
         "name": "unlimited_oversight_costs",
-        "description": "Record observed AI and recovery costs for a scoped request; values are not independently verified.",
+        "description": "Record model-submitted unverified AI and recovery costs for a scoped request in its service currency; not independently measured.",
         "parameters": {"type": "object", "properties": {
             "company_id": {"type": "string"}, "request_id": {"type": "string"},
             "ai_cost": {"type": "string"}, "recovery_cost": {"type": "string"}},

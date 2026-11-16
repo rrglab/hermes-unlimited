@@ -31,10 +31,19 @@ class OversightLedger:
         item = self.store.get_request(provider, tenant, company, request, identity)
         if item is None:
             raise ValueError("REQUEST_NOT_FOUND")
+        # Derive the unit from the existing tenant-scoped service contract,
+        # never from model-authored cost payloads.
+        with self.store._db() as db:
+            row = db.execute("""SELECT currency FROM services WHERE
+                provider=? AND tenant=? AND company=? AND service=?""",
+                (provider, tenant, company, item["service"])).fetchone()
+        if row is None:
+            raise ValueError("SERVICE_CURRENCY_UNAVAILABLE")
+        item["currency"] = row[0]
         return item
 
     def record(self, provider, tenant, company, request, entry_id, phase, minutes, hourly_rate, identity):
-        self._request(provider, tenant, company, request, identity)
+        item = self._request(provider, tenant, company, request, identity)
         self.store._ids(entry_id)
         try:
             entry = OversightEntry(request, OversightPhase(phase), Decimal(str(minutes)), Decimal(str(hourly_rate)))
@@ -44,10 +53,11 @@ class OversightLedger:
             db.execute("""INSERT INTO oversight_entries VALUES(?,?,?,?,?,?,?,?)""",
                        (provider, tenant, company, request, entry_id, entry.phase.value,
                         str(entry.minutes), str(entry.hourly_rate)))
-        return {"recorded": True, "request": request, "entry_id": entry_id}
+        return {"recorded": True, "request": request, "entry_id": entry_id,
+                "currency": item["currency"], "cost_input_provenance": "MODEL_SUBMITTED_UNVERIFIED"}
 
     def record_costs(self, provider, tenant, company, request, ai_cost, recovery_cost, identity):
-        self._request(provider, tenant, company, request, identity)
+        item = self._request(provider, tenant, company, request, identity)
         try:
             ai, recovery = Decimal(str(ai_cost)), Decimal(str(recovery_cost))
         except ArithmeticError as exc:
@@ -59,7 +69,8 @@ class OversightLedger:
                 ON CONFLICT(provider,tenant,company,request)
                 DO UPDATE SET ai_cost=excluded.ai_cost,recovery_cost=excluded.recovery_cost""",
                 (provider, tenant, company, request, str(ai), str(recovery)))
-        return {"recorded": True, "request": request}
+        return {"recorded": True, "request": request,
+                "currency": item["currency"], "cost_input_provenance": "MODEL_SUBMITTED_UNVERIFIED"}
 
     def report(self, provider, tenant, company, request, identity):
         item = self._request(provider, tenant, company, request, identity)
@@ -77,6 +88,9 @@ class OversightLedger:
                              Decimal(cost[1]) if cost else Decimal("0"), False)
         result = evaluate(d, entries)
         return {"request": request, "task_id": item["task_id"], "task_state": item["state"],
+                "currency": item["currency"],
+                "cost_input_provenance": "MODEL_SUBMITTED_UNVERIFIED",
+                "independently_verified": False,
                 "costs_recorded": cost is not None,
                 **{k: ({x: str(y) for x,y in v.items()} if isinstance(v, dict) else
                        str(v) if isinstance(v, Decimal) else v) for k,v in result.items()}}

@@ -28,6 +28,18 @@ class LedgerTests(unittest.TestCase):
         self.assertIsNone(result["net_value"])
         self.assertEqual(result["verification_status"], "UNVERIFIED")
 
+    def test_report_carries_service_currency_and_input_provenance(self):
+        self.ledger.record("provider", "tenant", "company", "request", "entry-one",
+                           "pre_control", "30", "60", "identity")
+        recorded = self.ledger.record_costs("provider", "tenant", "company", "request",
+                                            "10", "2", "identity")
+        report = self.ledger.report("provider", "tenant", "company", "request", "identity")
+        self.assertEqual(recorded["currency"], "USD")
+        self.assertEqual(report["currency"], "USD")
+        self.assertEqual(report["cost_input_provenance"], "MODEL_SUBMITTED_UNVERIFIED")
+        self.assertFalse(report["independently_verified"])
+        self.assertIsNone(report["net_value"])
+
     def test_nan_rejected(self):
         with self.assertRaises(ValueError):
             self.ledger.record("provider","tenant","company","request","entry-nan",

@@ -73,7 +73,7 @@ The canonical public manifest and `VERSION` must match. This source currently de
 ## What works
 
 - Candidate Hermes beta.1 plugin with thirteen native tools and no Hermes core override; public main/catalog remains alpha.4 until this candidate is separately promoted.
-- Operator-reported oversight time and AI/recovery costs can be recorded per scoped service request and read back. These are unverified cost inputs, not a bank statement, verified benefit or measured ROI.
+- Model-submitted, unverified oversight time and AI/recovery costs in the service currency can be recorded per scoped service request and read back. These are unverified cost inputs, not a bank statement, verified benefit or measured ROI.
 - Provider/tenant-scoped company and service registry backed by SQLite.
 - Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
 - JustYou session + signed Hermes profile binding verifier, with no token files bundled.
