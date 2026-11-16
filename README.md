@@ -34,6 +34,31 @@ Create AI-native companies for yourself and your customers. Publish services. Re
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
+## Names and acronyms
+
+| Term | Meaning |
+| --- | --- |
+| **AGY** | **Autonomous Goal Engine** — a goal-oriented engine for turning objectives into bounded work, tracking execution and evaluating results. Company operation is an application, not the expansion of AGY. |
+| **REHT** | **REHT Research Group** — the organization behind Hermes Unlimited. Used here as a name, not a separately expanded technical acronym. |
+| **CAVO** | **Chief AI Value Officer** — the role/function focused on the costs, value and return of AI use; not a claim of live financial outcomes in the public plugin. |
+| **A2UI** | **Agent-to-User Interface** — structured information presented through user interfaces; not a claim that a full cockpit ships in this repository. |
+| **JustYou** | Name of the identity and signed-session verification integration; not an acronym. |
+| **The Thread** | Name of an optional external agent/conversation memory system; distinct from the public plugin's present capabilities. |
+| **AI** | **Artificial Intelligence**. |
+| **API** | **Application Programming Interface**. |
+| **CLI** | **Command-Line Interface**. |
+| **MCP** | **Model Context Protocol**. |
+| **UI** | **User Interface**. |
+| **OS** | **Operating System**; “Company OS” refers to company management logic. |
+| **ROI** | **Return on Investment**. |
+| **SLA** | **Service Level Agreement**. |
+| **SMTP** | **Simple Mail Transfer Protocol**. |
+| **CI** | **Continuous Integration**. |
+| **SHA** | **Secure Hash Algorithm** (Git commit identifiers are SHA-derived hashes). |
+| **PR** | **Pull Request**. |
+
+These terms explain names used across the broader product and roadmap. Inclusion does not mean the corresponding capability is shipped or production-verified in this public release. See [What works](#what-works).
+
 ## Official public release repository
 
 **This is the official REHT Research Group public release home for Hermes Unlimited.** New implementation work occurs in private DEV repositories; tested and approved public releases are promoted here through pull requests. Do not automatically mirror the frozen competition source into this repository or overwrite release documentation. Release changes require relevant passing tests and security checks before merge.
