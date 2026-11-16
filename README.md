@@ -34,9 +34,36 @@ Create AI-native companies for yourself and your customers. Publish services. Re
 
 A native [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin for providers to create and operate AI-native companies and deliver services to their own customers.
 
-## Public source and planned migration
+## Names and acronyms
 
-The original [Hermes Agent hackathon catalog submission](https://github.com/NousResearch/hermes-agent/pull/153503) was submitted by `nsolland` and currently uses [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) as its public source. [`rrglab/hermes-unlimited`](https://github.com/rrglab/hermes-unlimited) is the public REHT Research Group mirror and the **intended future home**. Both repositories are kept in sync for the released plugin core during this transition. A future migration of the catalog source to `rrglab` will be coordinated explicitly, with a new verified commit pin; this statement is not a claim that the catalog has already migrated.
+| Term | Meaning |
+| --- | --- |
+| **AGY** | **Autonomous Goal Engine** — a goal-oriented engine for turning objectives into bounded work, tracking execution and evaluating results. Company operation is an application, not the expansion of AGY. |
+| **REHT** | **REHT Research Group** — the organization behind Hermes Unlimited. Used here as a name, not a separately expanded technical acronym. |
+| **CAVO** | **Chief AI Value Officer** — the role/function focused on the costs, value and return of AI use; not a claim of live financial outcomes in the public plugin. |
+| **A2UI** | **Agent-to-User Interface** — structured information presented through user interfaces; not a claim that a full cockpit ships in this repository. |
+| **JustYou** | Name of the identity and signed-session verification integration; not an acronym. |
+| **The Thread** | Name of an optional external agent/conversation memory system; distinct from the public plugin's present capabilities. |
+| **AI** | **Artificial Intelligence**. |
+| **API** | **Application Programming Interface**. |
+| **CLI** | **Command-Line Interface**. |
+| **MCP** | **Model Context Protocol**. |
+| **UI** | **User Interface**. |
+| **OS** | **Operating System**; “Company OS” refers to company management logic. |
+| **ROI** | **Return on Investment**. |
+| **SLA** | **Service Level Agreement**. |
+| **SMTP** | **Simple Mail Transfer Protocol**. |
+| **CI** | **Continuous Integration**. |
+| **SHA** | **Secure Hash Algorithm** (Git commit identifiers are SHA-derived hashes). |
+| **PR** | **Pull Request**. |
+
+These terms explain names used across the broader product and roadmap. Inclusion does not mean the corresponding capability is shipped or production-verified in this public release. See [What works](#what-works).
+
+## Official public release repository
+
+**This is the official REHT Research Group public release home for Hermes Unlimited.** New implementation work occurs in private DEV repositories; tested and approved public releases are promoted here through pull requests. Do not automatically mirror the frozen competition source into this repository or overwrite release documentation. Release changes require relevant passing tests and security checks before merge.
+
+The original [NousResearch Hermes Agent catalog entry #153503](https://github.com/NousResearch/hermes-agent/pull/153503) is already **merged**, but its alpha.4 pin still references [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) at `09cd80374b994fa38abc5ed6b8904b98ac9b3554`. That legacy repository is frozen for the competition submission. Changing the catalog URL or pinned source requires a separate reviewed upstream PR. No claim of externally verified customer fulfillment or payment settlement is implied.
 
 
 ## What works
