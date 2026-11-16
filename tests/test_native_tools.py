@@ -199,6 +199,31 @@ class ToolIntegrationTests(unittest.TestCase):
         self.assertFalse(self.call("unlimited_adapter_discover", {"tenant": "forged"})["ok"])
         self.assertEqual(self.call("unlimited_adapter_discover", {"id": "not-present"})["count"],0)
 
+    def test_memory_recall_native_handler_fail_closed_and_read_only(self):
+        import sqlite3
+        response=self.call("unlimited_memory_recall", {"company_id":"company-a"})
+        self.assertFalse(response["memory_available"])
+        self.assertFalse(response["attestation_verified"])
+        with sqlite3.connect(self.settings["HERMES_UNLIMITED_REGISTRY_DB"]) as db:
+            db.execute("""CREATE TABLE company_memory (
+                entry_id TEXT PRIMARY KEY, provider TEXT, tenant TEXT, company TEXT,
+                task_kind TEXT, source_id TEXT, classification TEXT,
+                independently_verified INTEGER, lesson TEXT, evidence_digest TEXT,
+                cost_minor REAL, verified_value_minor INTEGER, created_at INTEGER)""")
+            db.execute("INSERT INTO company_memory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                       ("memo-1","owner","tenant-a","company-a","triage","task-1",
+                        "RECORDED_UNVERIFIED",0,"Read this later",None,0,0,1))
+            db.execute("INSERT INTO company_memory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                       ("memo-2","owner","tenant-b","company-a","triage","task-2",
+                        "RECORDED_UNVERIFIED",0,"Other tenant",None,0,0,2))
+        result=self.call("unlimited_memory_recall", {"company_id":"company-a"})
+        self.assertEqual([x["entry_id"] for x in result["entries"]],["memo-1"])
+        self.assertFalse(result["attestation_verified"])
+        self.assertFalse(result["entries"][0]["independent_attestation_checked"])
+        self.assertFalse(self.call("unlimited_memory_recall", {"company_id":"company-a", "tenant":"tenant-b"})["ok"])
+        self.settings["HERMES_UNLIMITED_JUSTYOU_IDENTITY"]="@other"
+        self.assertFalse(self.call("unlimited_memory_recall", {"company_id":"company-a"})["ok"])
+
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
         self.assertNotIn("unlimited_creative_result", self.ctx.handlers)

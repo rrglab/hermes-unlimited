@@ -61,6 +61,16 @@ SCHEMAS = (
             "required": ["company_id","request_id"], "additionalProperties": False},
     },
     {
+        "name": "unlimited_memory_recall",
+        "description": "Read existing tenant-scoped Company Memory rows. Stored verification labels are not independently attested by this tool; no writes or effects.",
+        "parameters": {"type": "object", "properties": {
+            "company_id": {"type": "string"},
+            "task_kind": {"type": "string"},
+            "verified_only": {"type": "boolean"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 50}},
+            "required": ["company_id"], "additionalProperties": False},
+    },
+    {
         "name": "unlimited_company_list",
         "description": "List only companies in the bound provider and customer tenant.",
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -168,6 +178,12 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                                                   args["recovery_cost"], identity)
                     else:
                         out = ledger.report(*scope, identity)
+                elif name == "unlimited_memory_recall":
+                    from .memory_recall import recall_existing
+                    out = recall_existing(store, provider, tenant, args["company_id"],
+                                          identity, task_kind=args.get("task_kind"),
+                                          verified_only=args.get("verified_only", False),
+                                          limit=args.get("limit", 5))
                 elif name == "unlimited_company_create":
                     out = store.create_company(provider, tenant, args["company_id"],
                                                args["display_name"], identity)
