@@ -66,6 +66,10 @@ These terms explain names used across the broader product and roadmap. Inclusion
 The original [NousResearch Hermes Agent catalog entry #153503](https://github.com/NousResearch/hermes-agent/pull/153503) is already **merged**, but its alpha.4 pin still references [`nsolland/hermes-unlimited`](https://github.com/nsolland/hermes-unlimited) at `09cd80374b994fa38abc5ed6b8904b98ac9b3554`. That legacy repository is frozen for the competition submission. Changing the catalog URL or pinned source requires a separate reviewed upstream PR. No claim of externally verified customer fulfillment or payment settlement is implied.
 
 
+## Versioned release contract
+
+The canonical public manifest and `VERSION` must match. This source currently declares **0.1.0-alpha.4** with ten native Hermes tools. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
+
 ## What works
 
 - Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
