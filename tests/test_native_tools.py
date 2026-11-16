@@ -190,6 +190,15 @@ class ToolIntegrationTests(unittest.TestCase):
                               "tenant": "other"})
         self.assertEqual(response["reason"], "INVALID_ARGUMENTS")
 
+    def test_community_adapter_discovery_is_static_and_nonexecuting(self):
+        data=self.call("unlimited_adapter_discover")
+        self.assertTrue(data["ok"])
+        self.assertGreaterEqual(data["count"],1)
+        self.assertFalse(data["execution_enabled"])
+        self.assertTrue(all(item["can_execute"] is False for item in data["adapters"]))
+        self.assertFalse(self.call("unlimited_adapter_discover", {"tenant": "forged"})["ok"])
+        self.assertEqual(self.call("unlimited_adapter_discover", {"id": "not-present"})["count"],0)
+
     def test_unavailable_creative_backend_not_advertised(self):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
         self.assertNotIn("unlimited_creative_result", self.ctx.handlers)
