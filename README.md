@@ -68,11 +68,12 @@ The original [NousResearch Hermes Agent catalog entry #153503](https://github.co
 
 ## Versioned release contract
 
-The canonical public manifest and `VERSION` must match. This source currently declares **0.1.0-alpha.4** with ten native Hermes tools. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
+The canonical public manifest and `VERSION` must match. This source currently declares **0.2.0-beta.1** with thirteen native Hermes tools (release candidate; not yet published). Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
 
 ## What works
 
-- Installable Hermes alpha.4 plugin with ten native tools and no Hermes core override.
+- Candidate Hermes beta.1 plugin with thirteen native tools and no Hermes core override; public main/catalog remains alpha.4 until this candidate is separately promoted.
+- Operator-reported oversight time and AI/recovery costs can be recorded per scoped service request and read back. These are unverified cost inputs, not a bank statement, verified benefit or measured ROI.
 - Provider/tenant-scoped company and service registry backed by SQLite.
 - Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
 - JustYou session + signed Hermes profile binding verifier, with no token files bundled.
