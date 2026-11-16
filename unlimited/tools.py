@@ -34,6 +34,33 @@ SCHEMAS = (
             "additionalProperties": False},
     },
     {
+        "name": "unlimited_oversight_record",
+        "description": "Record model-submitted unverified oversight time against a scoped service request in its currency; not independent evidence.",
+        "parameters": {"type": "object", "properties": {
+            "company_id": {"type": "string"}, "request_id": {"type": "string"},
+            "entry_id": {"type": "string"},
+            "phase": {"type": "string", "enum": ["pre_control","co_planning","live_monitoring","post_review"]},
+            "minutes": {"type": "string"}, "hourly_rate": {"type": "string"}},
+            "required": ["company_id","request_id","entry_id","phase","minutes","hourly_rate"],
+            "additionalProperties": False},
+    },
+    {
+        "name": "unlimited_oversight_costs",
+        "description": "Record model-submitted unverified AI and recovery costs for a scoped request in its service currency; not independently measured.",
+        "parameters": {"type": "object", "properties": {
+            "company_id": {"type": "string"}, "request_id": {"type": "string"},
+            "ai_cost": {"type": "string"}, "recovery_cost": {"type": "string"}},
+            "required": ["company_id","request_id","ai_cost","recovery_cost"],
+            "additionalProperties": False},
+    },
+    {
+        "name": "unlimited_oversight_report",
+        "description": "Read scoped CAVO-ready cost breakdown; never claim verified benefit from Hermes task status.",
+        "parameters": {"type": "object", "properties": {
+            "company_id": {"type": "string"}, "request_id": {"type": "string"}},
+            "required": ["company_id","request_id"], "additionalProperties": False},
+    },
+    {
         "name": "unlimited_company_list",
         "description": "List only companies in the bound provider and customer tenant.",
         "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
@@ -128,6 +155,19 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                                               identity, surface_id=args["surface_id"])
                     else:
                         raise ValueError("INVALID_A2UI_VIEW_ARGUMENTS")
+                elif name in {"unlimited_oversight_record", "unlimited_oversight_costs",
+                                   "unlimited_oversight_report"}:
+                    from .oversight_ledger import OversightLedger
+                    ledger = OversightLedger(store)
+                    scope = (provider, tenant, args["company_id"], args["request_id"])
+                    if name == "unlimited_oversight_record":
+                        out = ledger.record(*scope, args["entry_id"], args["phase"],
+                                            args["minutes"], args["hourly_rate"], identity)
+                    elif name == "unlimited_oversight_costs":
+                        out = ledger.record_costs(*scope, args["ai_cost"],
+                                                  args["recovery_cost"], identity)
+                    else:
+                        out = ledger.report(*scope, identity)
                 elif name == "unlimited_company_create":
                     out = store.create_company(provider, tenant, args["company_id"],
                                                args["display_name"], identity)
