@@ -6,8 +6,8 @@ from unlimited.integrations import integration_catalog, integration_for
 class IntegrationCatalogTests(unittest.TestCase):
     def test_optional_adapters_are_discoverable_without_claiming_execution(self):
         catalog = integration_catalog()
-        self.assertEqual(len(catalog), 8)
-        self.assertEqual(len({entry["key"] for entry in catalog}), 8)
+        self.assertEqual(len(catalog), 9)
+        self.assertEqual(len({entry["key"] for entry in catalog}), 9)
         self.assertTrue(all(not entry["can_execute"] for entry in catalog))
 
     def test_upstream_boundaries(self):
@@ -20,6 +20,8 @@ class IntegrationCatalogTests(unittest.TestCase):
         self.assertFalse(integration_for("nvidia-openshell").can_execute)
         self.assertEqual(integration_for("nebius").role, "optional_compute_host")
         self.assertFalse(integration_for("nebius").can_execute)
+        self.assertEqual(integration_for("egm").interface, "plugin_via_t3")
+        self.assertFalse(integration_for("egm").can_execute)
         self.assertIsNone(integration_for("hyperagent"))
 
     def test_callers_cannot_mutate_catalog(self):

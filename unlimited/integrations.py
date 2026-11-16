@@ -26,6 +26,7 @@ INTEGRATIONS = (
     Integration("comfyui", "comfyanonymous/ComfyUI", "creative_image_video_workflows", "http_api", "GPL-3.0"),
     Integration("nvidia-openshell", "NVIDIA/OpenShell", "technical_sandbox_enforcement", "valo_gateway_runtime_adapter", "Apache-2.0"),
     Integration("nebius", "Nebius", "optional_compute_host", "deployment_provider", "proprietary"),
+    Integration("egm", "google/elephant-goldfish-model", "isolated_spec_review", "plugin_via_t3", "Apache-2.0"),
 )
 
 
