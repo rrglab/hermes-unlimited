@@ -12,11 +12,14 @@ import re
 TOOLSET = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]{0,63}$")
 
 
-def inspect_host_registry(registry, *, toolset, operation, objective=None, selected_tools=None):
+def inspect_host_registry(registry, *, toolset, operation, objective=None, selected_tools=None,
+                          source="HOST_REPORTED_SCHEMA"):
     if not isinstance(toolset, str) or not TOOLSET.fullmatch(toolset):
         raise ValueError("INVALID_TOOLSET")
     if operation not in ("discover", "propose"):
         raise ValueError("INVALID_OPERATION")
+    if source not in ("HOST_REPORTED_SCHEMA", "LOCAL_PLUGIN_DECLARATION_ONLY"):
+        raise ValueError("UNKNOWN_DISCOVERY_SOURCE")
     if registry is None or not all(callable(getattr(registry, name, None)) for name in
         ("get_all_tool_names", "get_toolset_for_tool", "get_definitions")):
         raise PermissionError("TRUSTED_HERMES_REGISTRY_REQUIRED")
@@ -53,7 +56,7 @@ def inspect_host_registry(registry, *, toolset, operation, objective=None, selec
     if operation == "discover":
         if objective is not None or selected_tools is not None:
             raise ValueError("DISCOVER_ARGUMENTS_INVALID")
-        return {"capabilities": entries, "source": "HOST_REPORTED_SCHEMA",
+        return {"capabilities": entries, "source": source,
                 "authority": "NONE", "execution_authorized": False}
     if not isinstance(objective, str) or not objective.strip() or len(objective) > 2048:
         raise ValueError("OBJECTIVE_INVALID")
@@ -63,6 +66,31 @@ def inspect_host_registry(registry, *, toolset, operation, objective=None, selec
         raise ValueError("UNDISCOVERED_OR_DUPLICATE_TOOL")
     draft = {"objective": objective.strip(), "tools": selected_tools,
              "capability_digests": [catalog[n]["schema_digest"] for n in selected_tools]}
-    return {"proposal": draft, "status": "DRAFT_UNVERIFIED", "source": "HOST_REPORTED_SCHEMA",
+    return {"proposal": draft, "status": "DRAFT_UNVERIFIED", "source": source,
             "effects_reviewed": False, "availability_verified": False,
             "authority": "NONE", "execution_authorized": False}
+
+class LocalPluginDeclarations:
+    """Explicitly declared schemas of this plugin, not live Hermes registry state."""
+
+    def __init__(self, schemas):
+        if not isinstance(schemas, (list, tuple)):
+            raise ValueError("PLUGIN_DECLARATIONS_INVALID")
+        self._schemas = {}
+        for schema in schemas:
+            if not isinstance(schema, dict) or not isinstance(schema.get("name"), str):
+                raise ValueError("PLUGIN_DECLARATION_INVALID")
+            if schema["name"] in self._schemas:
+                raise ValueError("PLUGIN_DECLARATION_DUPLICATE")
+            self._schemas[schema["name"]] = schema
+
+    def get_all_tool_names(self):
+        return list(self._schemas)
+
+    def get_toolset_for_tool(self, name):
+        return "hermes_unlimited" if name in self._schemas else None
+
+    def get_definitions(self, names, quiet=False):
+        if set(names) - set(self._schemas):
+            raise ValueError("UNDECLARED_PLUGIN_TOOL")
+        return [{"function": self._schemas[name]} for name in sorted(names)]

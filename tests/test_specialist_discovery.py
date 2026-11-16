@@ -43,6 +43,20 @@ class SpecialistDiscoveryTests(unittest.TestCase):
                                   objective='Do',selected_tools=['dns_read','dns_read'])
         with self.assertRaises(ValueError):
             inspect_host_registry(HostRegistry(),toolset='dns',operation='discover',objective='Do')
+    def test_local_declarations_cannot_claim_host_availability(self):
+        from unlimited.specialist_discovery import LocalPluginDeclarations
+        registry = LocalPluginDeclarations(({"name":"sample", "parameters":{"type":"object","properties":{}}},))
+        local = inspect_host_registry(registry,toolset='hermes_unlimited',operation='discover',
+                                      source='LOCAL_PLUGIN_DECLARATION_ONLY')
+        self.assertEqual(local['source'],'LOCAL_PLUGIN_DECLARATION_ONLY')
+        self.assertFalse(local['execution_authorized'])
+        self.assertFalse(local['capabilities'][0]['availability_verified'])
+        with self.assertRaises(ValueError):
+            LocalPluginDeclarations(({"name":"x"},{"name":"x"}))
+        with self.assertRaises(ValueError):
+            inspect_host_registry(registry,toolset='hermes_unlimited',operation='discover',
+                                  source='VERIFIED_AND_AUTHORIZED')
+
     def test_host_definition_spoof_fails_closed(self):
         class Forged(HostRegistry):
             def get_definitions(self, names, quiet=False):

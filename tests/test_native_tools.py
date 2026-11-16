@@ -228,6 +228,15 @@ class ToolIntegrationTests(unittest.TestCase):
         denied = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"dns"})
         self.assertFalse(denied["ok"])
         self.assertEqual(denied["reason"], "PermissionError")
+        local = self.call("unlimited_specialist_factory", {"operation":"discover", "toolset":"hermes_unlimited"})
+        self.assertEqual(local["source"], "LOCAL_PLUGIN_DECLARATION_ONLY")
+        self.assertFalse(local["execution_authorized"])
+        self.assertEqual(len(local["capabilities"]),15)  # excludes this discovery tool
+        self.assertTrue(all(x["effect"] == "unknown" and not x["availability_verified"] for x in local["capabilities"]))
+        local_proposal = self.call("unlimited_specialist_factory", {"operation":"propose", "toolset":"hermes_unlimited",
+                    "objective":"Review local catalog", "selected_tools":["unlimited_company_list"]})
+        self.assertEqual(local_proposal["source"], "LOCAL_PLUGIN_DECLARATION_ONLY")
+        self.assertFalse(local_proposal["execution_authorized"])
         class TrustedRegistry:
             def get_all_tool_names(self): return ["dns_read", "dns_write", "other"]
             def get_toolset_for_tool(self, name): return "dns" if name.startswith("dns_") else "other"

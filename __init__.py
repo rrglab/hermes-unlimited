@@ -174,4 +174,5 @@ def register(ctx):
         from .unlimited.tools import register_company_tools
     except ImportError:
         from unlimited.tools import register_company_tools
-    register_company_tools(ctx, scoped_secret, scoped_identity)
+    register_company_tools(ctx, scoped_secret, scoped_identity,
+                           declared_schemas=(STATUS_SCHEMA, TASK_SCHEMA, RESULT_SCHEMA, ADAPTER_DISCOVERY_SCHEMA))

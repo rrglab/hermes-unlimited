@@ -111,7 +111,7 @@ SCHEMAS = (
 )
 
 
-def register_company_tools(ctx, scoped_secret, scoped_identity):
+def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas=()):
     from .runtime import ProviderStore
 
     def adapter():
@@ -195,11 +195,23 @@ def register_company_tools(ctx, scoped_secret, scoped_identity):
                                           verified_only=args.get("verified_only", False),
                                           limit=args.get("limit", 5))
                 elif name == "unlimited_specialist_factory":
-                    from .specialist_discovery import inspect_host_registry
+                    from .specialist_discovery import inspect_host_registry, LocalPluginDeclarations
+                    host_registry = getattr(ctx, "tool_registry", None)
+                    if host_registry is None:
+                        # Hermes PluginContext 0.23.1 does not expose a public
+                        # tool_registry; fall back ONLY to our own bundled,
+                        # non-live declarations and label them accordingly.
+                        if args["toolset"] != "hermes_unlimited":
+                            raise PermissionError("HOST_REGISTRY_REQUIRED_FOR_EXTERNAL_TOOLSET")
+                        registry = LocalPluginDeclarations(tuple(declared_schemas) + SCHEMAS)
+                        source = "LOCAL_PLUGIN_DECLARATION_ONLY"
+                    else:
+                        registry = host_registry
+                        source = "HOST_REPORTED_SCHEMA"
                     out = inspect_host_registry(
-                        getattr(ctx, "tool_registry", None),
-                        toolset=args["toolset"], operation=args["operation"],
-                        objective=args.get("objective"), selected_tools=args.get("selected_tools"))
+                        registry, toolset=args["toolset"], operation=args["operation"],
+                        objective=args.get("objective"), selected_tools=args.get("selected_tools"),
+                        source=source)
                 elif name == "unlimited_company_create":
                     out = store.create_company(provider, tenant, args["company_id"],
                                                args["display_name"], identity)
