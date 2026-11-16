@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "ember",
+  "name": "Ember community chat",
+  "version": "0.1.0",
+  "description": "Own-hosted chat; webhook and API integration require real admission tests",
+  "upstream_url": "https://github.com/NYLLON-SOFTWARE/ember-cloudflare",
+  "documentation_url": "https://github.com/NYLLON-SOFTWARE/ember-cloudflare",
+  "license": "Apache-2.0",
+  "interface": "webhook",
+  "capabilities": [
+    "chat.message.receive",
+    "chat.message.send"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}

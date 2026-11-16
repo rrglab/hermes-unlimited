@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "zulip",
+  "name": "Zulip",
+  "version": "0.1.0",
+  "description": "Use existing Zulip REST and bot APIs",
+  "upstream_url": "https://zulip.com/",
+  "documentation_url": "https://zulip.com/api/",
+  "license": "Apache-2.0",
+  "interface": "api",
+  "capabilities": [
+    "chat.message.receive",
+    "chat.message.send"
+  ],
+  "state": "catalog-only",
+  "source_available": false,
+  "community_free": true,
+  "provider_charges_may_apply": true,
+  "justyou_required": true
+}
