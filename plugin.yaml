@@ -1,6 +1,6 @@
 name: hermes-unlimited
 kind: standalone
-version: 0.2.0-beta.3
+version: 0.2.0-beta.4
 description: Native Hermes public core for provider-operated AI-native companies
 requires_hermes: ">=0.21.5"
 provides_tools:
@@ -19,6 +19,7 @@ provides_tools:
   - unlimited_oversight_report
   - unlimited_adapter_discover
   - unlimited_memory_recall
+  - unlimited_specialist_factory
 
 requires_env:
   - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
