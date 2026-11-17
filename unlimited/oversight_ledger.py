@@ -4,7 +4,7 @@ Requires trusted JustYou verification via ProviderStore; never accepts an agent'
 self-report as independent verification or as a monetary benefit claim.
 """
 from decimal import Decimal
-from human_oversight_economics import DeliveryEconomics, OversightEntry, OversightPhase, evaluate
+from .human_oversight_economics import DeliveryEconomics, OversightEntry, OversightPhase, evaluate
 
 
 class OversightLedger:
