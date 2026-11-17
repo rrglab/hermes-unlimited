@@ -305,6 +305,10 @@ The GitHub hero is [`assets/brand/github-banner.svg`](assets/brand/github-banner
 
 Brand colors: midnight `#0B0F17`, champagne gold `#C9A76A`, and ivory `#F8F9F5`. The product name is **Hermes Unlimited**; the endorsement is **by REHT**. These assets are product branding, not a claim that optional integrations are included in this repository.
 
+## AI Workforce — optional qualification plugin (preview)
+
+**Don't just deploy agents. Qualify them, govern their work, and keep demonstrated capability separate from execution permission.** AI Workforce is a proposed optional integration of [EmplAI](https://github.com/nsolland/emplai) competence assessment, [relAIon](https://github.com/nsolland/relaion) evidence lineage, and [JACKETS](https://github.com/nsolland/jackets) live mandates into existing Hermes worker and company flows. **Not included or installable in this public core release.** Read the [product description and release checklist](docs/WORKFORCE_PLUGIN_PREVIEW.md).
+
 ## Digital workforce integration boundaries
 
 Hermes Unlimited is a **consumer and orchestration surface**, not a second system of record for professional qualification, developmental history or execution authority. **EmplAI is the canonical operational owner of capability identity, verification, Shu/Ha/Ri evidence-based assessment and matching.** VALO Family defines the professional vocabulary, relAIon owns developmental history, and JACKETS owns the live Work Permit mandate and admission state. Unlimited does not implement a second qualification engine. Integrations may reference a model/agent **Passport** (artifact provenance and evaluation evidence), a domain-specific professional qualification (Shu/Ha/Ri, Tatsujin or Steward), developmental capability evidence, and a **Work Permit** (a live, scoped mandate administered by an external authority system such as JACKETS). These concepts are distinct: qualifications and Passports never themselves grant runtime permissions. Existing Hermes tools and integrations should be reused before creating new components.
