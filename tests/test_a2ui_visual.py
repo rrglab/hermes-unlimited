@@ -82,7 +82,7 @@ class A2UIVisualRegression(unittest.TestCase):
                             s.textContent = '* { animation: none !important; transition: none !important; caret-color: transparent !important; }';
                             document.head.appendChild(s);
                         }""")
-                        image = page.screenshot(full_page=True, animations="disabled")
+                        image = page.locator("#surface").screenshot(animations="disabled")
                         baseline = BASELINES / f"a2ui-companies-{viewport}.png"
                         if update:
                             baseline.parent.mkdir(parents=True, exist_ok=True)
