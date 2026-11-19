@@ -93,6 +93,11 @@ class A2UIVisualRegression(unittest.TestCase):
                             actual = artifact_dir / f"a2ui-companies-{viewport}-actual.png"
                             actual.write_bytes(image)
                             self.fail(f"Visual regression at {viewport}; actual: {actual}; baseline: {baseline}")
+                        # Negative control: a real CSS change must be detected.
+                        page.locator("#surface").evaluate("""el => { el.style.border = "8px solid red"; }""")
+                        changed = page.locator("#surface").screenshot(animations="disabled")
+                        self.assertFalse(compare_png(changed, baseline.read_bytes()),
+                                         f"Visual regression detector missed deliberate CSS change: {viewport}")
                     finally:
                         page.close()
 
