@@ -11,12 +11,11 @@ python -m pip install playwright
 HERMES_VISUAL_UPDATE=1 python -m unittest tests.test_a2ui_visual
 git add tests/visual_baselines
 # Review all three generated PNG files before committing them.
-python -m unittest tests.test_a2ui_visual
+HERMES_VISUAL_STRICT=1 python -m unittest tests.test_a2ui_visual
 ```
 
 To run with a custom output directory, set `HERMES_VISUAL_ARTIFACTS`.
-A visual mismatch writes the actual screenshot and fails the test. Missing
-baselines also fail; they are not automatically created. Baseline updates
+A visual mismatch writes the actual screenshot and fails the test. Missing baselines fail in strict mode (`HERMES_VISUAL_STRICT=1`); otherwise a screenshot is captured as a local artifact and rendering smoke continues. Baselines are never automatically accepted. Baseline updates
 are opt-in and should be reviewed as code changes.
 
 **Scope:** This checks one synthetic A2UI company view, not customer-facing
