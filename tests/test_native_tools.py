@@ -86,8 +86,8 @@ class ToolIntegrationTests(unittest.TestCase):
     def test_manifest_declares_all_registered_tools(self):
         manifest = (ROOT / "plugin.yaml").read_text(encoding="utf-8")
         tools_section = manifest.split("provides_tools:", 1)[1].split("\nrequires_env:", 1)[0]
-        names = set(line.strip()[2:] for line in tools_section.splitlines()
-                    if line.strip().startswith("- "))
+        names = {line.strip()[2:] for line in tools_section.splitlines()
+                 if line.strip().startswith("- ")}
         self.assertEqual(names, set(self.ctx.handlers),
                          "plugin.yaml must match registered tools exactly")
 
