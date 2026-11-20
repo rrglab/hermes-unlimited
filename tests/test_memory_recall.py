@@ -1,10 +1,10 @@
 import pathlib
-import sqlite3
 import tempfile
 import unittest
 
 from unlimited.memory_recall import recall_existing
 from unlimited.runtime import ProviderStore, UnverifiedIdentity
+
 
 class MemoryRecallTests(unittest.TestCase):
     def setUp(self):

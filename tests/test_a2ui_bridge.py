@@ -1,9 +1,9 @@
 """Authenticated loopback bridge exercising native Hermes tool identity scope."""
 import json
 import threading
+import unittest
 import urllib.error
 import urllib.request
-import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 

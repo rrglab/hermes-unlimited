@@ -1,10 +1,13 @@
-import unittest
 import subprocess
 import sys
+import unittest
 
 from unlimited.authoritative_binding import (
-    AuthorityBinding, Ed25519Authority, HmacAuthority,
-    VerifiedResolver, VersionAnnouncement,
+    AuthorityBinding,
+    Ed25519Authority,
+    HmacAuthority,
+    VerifiedResolver,
+    VersionAnnouncement,
 )
 
 
@@ -27,8 +30,10 @@ class StandaloneVerifierTests(unittest.TestCase):
     def test_signed_ed25519_announcement_digest_mismatch_fails_closed(self):
         from dataclasses import replace
         from datetime import datetime, timedelta, timezone
+
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        from unlimited.authoritative_binding import FreshnessError, ConflictError
+
+        from unlimited.authoritative_binding import ConflictError, FreshnessError
         now = datetime.now(timezone.utc)
         signer = Ed25519Authority("fixture-signing-id", Ed25519PrivateKey.generate())
         verifier = VerifiedResolver([Ed25519Authority.verifier(

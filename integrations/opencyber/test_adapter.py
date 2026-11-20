@@ -6,6 +6,7 @@ import unittest
 spec = importlib.util.spec_from_file_location("opencyber_adapter", pathlib.Path(__file__).with_name("adapter.py"))
 module = importlib.util.module_from_spec(spec)
 import sys
+
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 

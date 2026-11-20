@@ -4,8 +4,12 @@ import unittest
 from pathlib import Path
 
 from unlimited.community_adapters import (
-    CommunityAdapterError, activation_check, list_adapters, scaffold,
-    validate_manifest, main,
+    CommunityAdapterError,
+    activation_check,
+    list_adapters,
+    main,
+    scaffold,
+    validate_manifest,
 )
 
 

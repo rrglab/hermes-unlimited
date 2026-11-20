@@ -6,8 +6,9 @@ This module does not execute tools, mint permits, or assert authority.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 KNOWN_EFFECTS = frozenset({"process", "filesystem", "network", "device", "secret", "mutation"})
 KNOWN_SCOPES = frozenset({"none", "argv", "url", "device", "engagement"})

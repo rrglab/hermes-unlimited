@@ -51,11 +51,11 @@ def get_status(profile_name):
 
 def _modules():
     try:
-        from .unlimited.justyou import JustYouVerifier
         from .unlimited.hermes_kanban import HermesKanban
+        from .unlimited.justyou import JustYouVerifier
     except ImportError:
-        from unlimited.justyou import JustYouVerifier
         from unlimited.hermes_kanban import HermesKanban
+        from unlimited.justyou import JustYouVerifier
     return JustYouVerifier, HermesKanban
 
 
@@ -163,7 +163,7 @@ def register(ctx):
             return json.dumps({"ok": True, "count": len(matches), "adapters": matches,
                 "execution_enabled": False, "community_adapter_code_free": True,
                 "provider_charges_may_apply": True}, sort_keys=True)
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError):
             return json.dumps({"ok": False, "reason": "CATALOG_UNAVAILABLE"})
 
     ctx.register_tool(name=ADAPTER_DISCOVERY_SCHEMA["name"], toolset="hermes_unlimited",

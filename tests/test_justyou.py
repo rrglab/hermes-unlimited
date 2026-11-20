@@ -1,5 +1,6 @@
 import unittest
 from types import SimpleNamespace
+
 from unlimited.justyou import JustYouVerifier
 
 

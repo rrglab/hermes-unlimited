@@ -1,5 +1,6 @@
 """Protocol boundaries for integrations; implementations are not bundled in skeleton."""
 from typing import Protocol
+
 from .contracts import CompanySpec, ServiceSpec, TaskReceipt
 
 

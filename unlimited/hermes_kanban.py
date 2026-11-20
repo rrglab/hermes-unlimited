@@ -17,7 +17,7 @@ def board_for(provider, tenant):
     """Derive an isolated Hermes board from trusted provider and tenant scope."""
     if not all(isinstance(v, str) and ROLE_ID.fullmatch(v) for v in (provider, tenant)):
         raise ValueError("SCOPE_INVALID")
-    digest = hashlib.sha256(f"{provider}\0{tenant}".encode("utf-8")).hexdigest()[:24]
+    digest = hashlib.sha256(f"{provider}\0{tenant}".encode()).hexdigest()[:24]
     return f"unlimited-{digest}"
 
 

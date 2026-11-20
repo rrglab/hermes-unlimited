@@ -5,7 +5,7 @@ never routes, authorizes, stops, bills, or asserts independently verified ROI.
 """
 from decimal import Decimal, InvalidOperation
 
-MAX_AMOUNT = Decimal("1000000000000")
+MAX_AMOUNT = Decimal(1000000000000)
 
 
 def _scenario_amount(raw):

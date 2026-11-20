@@ -5,17 +5,17 @@ are real. By default Kanban is stubbed; an opt-in isolated Hermes-home mode
 uses the real native Kanban CLI without dispatching a model worker.
 """
 import importlib.util
-import os
-import subprocess
-import uuid
-from contextlib import nullcontext
 import json
+import os
 import pathlib
+import subprocess
 import sys
 import tempfile
 import threading
 import types
 import unittest
+import uuid
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import patch

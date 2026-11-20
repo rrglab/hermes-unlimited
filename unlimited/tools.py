@@ -206,7 +206,10 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                                           verified_only=args.get("verified_only", False),
                                           limit=args.get("limit", 5))
                 elif name == "unlimited_specialist_factory":
-                    from .specialist_discovery import inspect_host_registry, LocalPluginDeclarations
+                    from .specialist_discovery import (
+                        LocalPluginDeclarations,
+                        inspect_host_registry,
+                    )
                     host_registry = getattr(ctx, "tool_registry", None)
                     if host_registry is None:
                         # Hermes PluginContext 0.23.1 does not expose a public

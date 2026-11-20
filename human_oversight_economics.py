@@ -28,7 +28,7 @@ class OversightEntry:
 
     @property
     def cost(self) -> Decimal:
-        return self.minutes * self.hourly_rate / Decimal("60")
+        return self.minutes * self.hourly_rate / Decimal(60)
 
 
 @dataclass(frozen=True)
@@ -50,9 +50,9 @@ def evaluate(delivery: DeliveryEconomics, entries: list[OversightEntry]) -> dict
     """Return explicit cost breakdown; unverified deliveries have no claimed net value."""
     if any(e.delivery_id != delivery.delivery_id for e in entries):
         raise ValueError("oversight entries must belong to the delivery")
-    phases = {p.value: sum((e.cost for e in entries if e.phase == p), Decimal("0"))
+    phases = {p.value: sum((e.cost for e in entries if e.phase == p), Decimal(0))
               for p in OversightPhase}
-    oversight = sum(phases.values(), Decimal("0"))
+    oversight = sum(phases.values(), Decimal(0))
     total = delivery.ai_cost + delivery.recovery_cost + oversight
     return {
         "delivery_id": delivery.delivery_id,

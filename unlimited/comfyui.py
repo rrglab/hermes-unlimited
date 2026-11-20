@@ -9,7 +9,6 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
-
 _ID = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
 
 

@@ -5,8 +5,8 @@ import sys
 import tempfile
 import types
 import unittest
-from unittest.mock import patch
 from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -115,6 +115,7 @@ class ToolIntegrationTests(unittest.TestCase):
     def test_a2ui_loopback_bridge_calls_real_registered_hermes_handler(self):
         import threading
         import urllib.request
+
         from unlimited.a2ui_bridge import make_bridge, new_transport_token
         self.call("unlimited_company_create", {"company_id":"company-a", "display_name":"Live through Hermes"})
         token = new_transport_token()
