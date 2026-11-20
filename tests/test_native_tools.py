@@ -102,7 +102,8 @@ class ToolIntegrationTests(unittest.TestCase):
         req = self.call("unlimited_service_request",
                         {"company_id": "company-a", "service_id": "brief",
                          "request_id": "request-a", "payload": {"topic": "market"}})
-        self.assertEqual(req["state"], "running")
+        self.assertEqual(req["state"], "blocked")
+        self.assertTrue(req["authorization_required"])
         self.assertEqual(req["task_id"], "task-1")
         self.assertEqual(len(self.submissions), 1)
         result = self.call("unlimited_service_result", {"company_id": "company-a",
