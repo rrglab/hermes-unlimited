@@ -30,25 +30,25 @@ class StandaloneVerifierTests(unittest.TestCase):
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
         from unlimited.authoritative_binding import FreshnessError, ConflictError
         now = datetime.now(timezone.utc)
-        signer = Ed25519Authority("test-key", Ed25519PrivateKey.generate())
+        signer = Ed25519Authority("fixture-signing-id", Ed25519PrivateKey.generate())
         verifier = VerifiedResolver([Ed25519Authority.verifier(
-            "test-key", signer.public_key_b64())], source="unit")
+            "fixture-signing-id", signer.public_key_b64())], source="unit")
         binding = signer.sign_binding(AuthorityBinding(
             identity="@test", version=1, carrier="hermes-profile",
             endpoint="hermes-profile:agent", endpoint_key_id="agent",
-            authority_key_id="test-key", valid_from=now - timedelta(minutes=1),
+            authority_key_id="fixture-signing-id", valid_from=now - timedelta(minutes=1),
             valid_until=now + timedelta(hours=1)))
         verifier.cache_binding(binding)
         valid = signer.sign_announcement(VersionAnnouncement(
             identity="@test", version=1, binding_digest=binding.digest(),
-            announced_at=now, authority_key_id="test-key"))
+            announced_at=now, authority_key_id="fixture-signing-id"))
         verifier.accept_announcement(valid)
         self.assertEqual(verifier.resolve("@test", now=now)[0], binding)
         mismatch = signer.sign_announcement(replace(valid, binding_digest="bad-digest", signature=""))
         with self.assertRaises(ConflictError):
             verifier.accept_announcement(mismatch)
         isolated = VerifiedResolver([Ed25519Authority.verifier(
-            "test-key", signer.public_key_b64())], source="unit")
+            "fixture-signing-id", signer.public_key_b64())], source="unit")
         isolated.cache_binding(binding)
         isolated.accept_announcement(mismatch)
         with self.assertRaises(FreshnessError):
