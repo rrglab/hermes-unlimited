@@ -12,8 +12,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import asdict, dataclass
-from typing import Awaitable, Callable, Mapping
 
 ModelCall = Callable[[str, str], Awaitable[str]]
 QUESTIONS = (

@@ -4,8 +4,8 @@ Discovery is not activation. A thread creation result is not a completed review.
 The caller must supply the actual trusted scoped dispatcher; this module
 cannot infer host identity, grants, or plugin installation from metadata.
 """
-from collections.abc import Callable
 import re
+from collections.abc import Callable
 
 _SAFE_PATH = re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_./-]{0,255}$")
 _MODES = {"uninterrupted", "feature_spec", "implementation"}

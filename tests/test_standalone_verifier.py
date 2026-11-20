@@ -1,10 +1,13 @@
-import unittest
 import subprocess
 import sys
+import unittest
 
 from unlimited.authoritative_binding import (
-    AuthorityBinding, Ed25519Authority, HmacAuthority,
-    VerifiedResolver, VersionAnnouncement,
+    AuthorityBinding,
+    Ed25519Authority,
+    HmacAuthority,
+    VerifiedResolver,
+    VersionAnnouncement,
 )
 
 
@@ -15,20 +18,22 @@ class StandaloneVerifierTests(unittest.TestCase):
         self.assertTrue(callable(VersionAnnouncement))
         isolated = subprocess.run(
             [sys.executable, "-c",
-             "import builtins; old=builtins.__import__; "
+             ("import builtins; old=builtins.__import__; "
              "builtins.__import__=lambda name,*a,**k: "
              "(_ for _ in ()).throw(ImportError('protocol denied')) "
              "if name=='protocol' or name.startswith('protocol.') else old(name,*a,**k); "
              "from unlimited.authoritative_binding import VerifiedResolver; "
-             "assert callable(VerifiedResolver)"],
+             "assert callable(VerifiedResolver)")],
             capture_output=True, text=True, check=False)
         self.assertEqual(isolated.returncode, 0, isolated.stderr)
 
     def test_signed_ed25519_announcement_digest_mismatch_fails_closed(self):
         from dataclasses import replace
         from datetime import datetime, timedelta, timezone
+
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        from unlimited.authoritative_binding import FreshnessError, ConflictError
+
+        from unlimited.authoritative_binding import ConflictError, FreshnessError
         now = datetime.now(timezone.utc)
         signer = Ed25519Authority("fixture-signing-id", Ed25519PrivateKey.generate())
         verifier = VerifiedResolver([Ed25519Authority.verifier(

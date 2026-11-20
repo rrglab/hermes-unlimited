@@ -13,7 +13,7 @@ import re
 import secrets
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import parse_qs, urlsplit
 
 from .a2ui_adapter import validate_envelope
 

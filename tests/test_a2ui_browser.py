@@ -2,12 +2,10 @@
 
 Optional when Playwright/Chromium are absent. No real customer data is used.
 """
-import contextlib
 import functools
 import http.server
 import json
 import shutil
-import socketserver
 import tempfile
 import threading
 import unittest

@@ -4,7 +4,13 @@ Requires trusted JustYou verification via ProviderStore; never accepts an agent'
 self-report as independent verification or as a monetary benefit claim.
 """
 from decimal import Decimal
-from .human_oversight_economics import DeliveryEconomics, OversightEntry, OversightPhase, evaluate
+
+from .human_oversight_economics import (
+    DeliveryEconomics,
+    OversightEntry,
+    OversightPhase,
+    evaluate,
+)
 
 
 class OversightLedger:
@@ -83,9 +89,9 @@ class OversightLedger:
                 (provider, tenant, company, request)).fetchone()
         entries = [OversightEntry(request, OversightPhase(p), Decimal(m), Decimal(h)) for p,m,h in rows]
         # Native Hermes Kanban reports are self-reports; never infer independent verification.
-        d = DeliveryEconomics(request, Decimal("0"),
-                             Decimal(cost[0]) if cost else Decimal("0"),
-                             Decimal(cost[1]) if cost else Decimal("0"), False)
+        d = DeliveryEconomics(request, Decimal(0),
+                             Decimal(cost[0]) if cost else Decimal(0),
+                             Decimal(cost[1]) if cost else Decimal(0), False)
         result = evaluate(d, entries)
         return {"request": request, "task_id": item["task_id"], "task_state": item["state"],
                 "currency": item["currency"],

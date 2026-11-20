@@ -41,11 +41,11 @@ class LiveNativeKanbanTests(unittest.TestCase):
             "binding_digest": "SYNTHETIC_FIXTURE_NOT_AUTHORITY",
             "profile": profile,
         }
-        kwargs = dict(
-            tenant=tenant, assignee=profile, task_id="one-request",
-            title="-leading-dash-title", body="--body-like-argument",
-            identity_evidence=evidence,
-        )
+        kwargs = {
+            "tenant": tenant, "assignee": profile, "task_id": "one-request",
+            "title": "-leading-dash-title", "body": "--body-like-argument",
+            "identity_evidence": evidence,
+        }
         result = adapter.enqueue(**kwargs)
         self.assertFalse(result["executed"])
         self.assertEqual(result["status"], "AUTHORIZATION_REQUIRED")

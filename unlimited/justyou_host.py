@@ -72,9 +72,12 @@ def _private_bytes(path):
 
 
 def load_resolver(bindings_path, authority_key_id, authority_key_file, authority_kind="ed25519"):
-    from .authoritative_binding import (AuthorityBinding, Ed25519Authority,
-                                                VerifiedResolver,
-                                                VersionAnnouncement)
+    from .authoritative_binding import (
+        AuthorityBinding,
+        Ed25519Authority,
+        VerifiedResolver,
+        VersionAnnouncement,
+    )
     material = _private_bytes(authority_key_file).strip()
     if authority_kind == "ed25519":
         authority = Ed25519Authority.verifier(authority_key_id, material.decode("ascii"))

@@ -22,7 +22,7 @@ class PackagedOversightImportTest(unittest.TestCase):
             )
             result = subprocess.run(
                 [sys.executable, "-I", "-c", code],
-                cwd=temporary, capture_output=True, text=True, timeout=20,
+                cwd=temporary, capture_output=True, text=True, timeout=20, check=False,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 

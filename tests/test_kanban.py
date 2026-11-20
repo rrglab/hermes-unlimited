@@ -1,6 +1,7 @@
 import json
 import unittest
 from types import SimpleNamespace
+
 from unlimited.hermes_kanban import HermesKanban, board_for
 
 

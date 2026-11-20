@@ -6,18 +6,19 @@ import unittest
 spec = importlib.util.spec_from_file_location("opencyber_adapter", pathlib.Path(__file__).with_name("adapter.py"))
 module = importlib.util.module_from_spec(spec)
 import sys
+
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 
 class OpenCyberAdapterTests(unittest.TestCase):
     def tool(self, **overrides):
-        oc = dict(contract_schema_version=1, shape="observe", effects=["network"], scope="url", requires_engagement=True, returns_target_content=True)
+        oc = {"contract_schema_version": 1, "shape": "observe", "effects": ["network"], "scope": "url", "requires_engagement": True, "returns_target_content": True}
         oc.update(overrides)
         return {"name": "oc_http_request", "_meta": {"opencyber": oc}}
 
     def result(self, status="complete", ok=True):
-        data = dict(ok=ok, contract={"schema_version": 1, "tool": "oc_http_request"}, coverage={"status": status}, limitations=[], provenance={"untrusted_content": True, "source": "target"}, evidence={"sha256": "a"*64})
+        data = {"ok": ok, "contract": {"schema_version": 1, "tool": "oc_http_request"}, "coverage": {"status": status}, "limitations": [], "provenance": {"untrusted_content": True, "source": "target"}, "evidence": {"sha256": "a"*64}}
         if not ok:
             data["error"] = {"code": "scope_denied"}
         return data

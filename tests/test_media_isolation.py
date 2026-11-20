@@ -1,7 +1,9 @@
 """Core regression: media tooling is not needed for normal adapter use."""
 import unittest
 from unittest.mock import patch
-from unlimited.screenplay_adapter import ScreenplayAdapter, AdapterConfig
+
+from unlimited.screenplay_adapter import AdapterConfig, ScreenplayAdapter
+
 
 class CoreMediaIsolationTests(unittest.TestCase):
     def test_core_does_not_resolve_ffmpeg(self):

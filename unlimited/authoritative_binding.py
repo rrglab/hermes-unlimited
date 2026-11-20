@@ -6,13 +6,14 @@ Only verification keys may be provided at runtime; no private keys shipped.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from datetime import datetime, timezone
-from enum import Enum
 import hashlib
 import hmac
 import json
-from typing import Dict, Iterable, Protocol, Tuple
+from collections.abc import Iterable
+from dataclasses import dataclass, replace
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Protocol
 
 
 class ProtocolError(ValueError):
@@ -192,7 +193,8 @@ class Ed25519Authority:
 
     def __init__(self, key_id: str, private_key=None, *, public_key=None):
         from cryptography.hazmat.primitives.asymmetric.ed25519 import (
-            Ed25519PrivateKey, Ed25519PublicKey,
+            Ed25519PrivateKey,
+            Ed25519PublicKey,
         )
         if not key_id:
             raise ProtocolError("key_id is required")
@@ -205,8 +207,9 @@ class Ed25519Authority:
         self._public = private_key.public_key() if private_key is not None else public_key
 
     @classmethod
-    def verifier(cls, key_id: str, public_key_b64: str) -> "Ed25519Authority":
+    def verifier(cls, key_id: str, public_key_b64: str) -> Ed25519Authority:
         import base64
+
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
         try:
             raw = base64.b64decode(public_key_b64, validate=True)
@@ -217,6 +220,7 @@ class Ed25519Authority:
 
     def public_key_b64(self) -> str:
         import base64
+
         from cryptography.hazmat.primitives import serialization
         raw = self._public.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
         return base64.b64encode(raw).decode()
@@ -255,8 +259,8 @@ class AuthoritativeRegistry:
     """Canonical authority state. Propagation is not authority."""
 
     def __init__(self, authorities: Iterable[Verifier]):
-        self._authorities: Dict[str, Verifier] = {a.key_id: a for a in authorities}
-        self._current: Dict[str, AuthorityBinding] = {}
+        self._authorities: dict[str, Verifier] = {a.key_id: a for a in authorities}
+        self._current: dict[str, AuthorityBinding] = {}
         self._receipts: list[CommitReceipt] = []
 
     def _verify(self, binding: AuthorityBinding) -> None:
@@ -299,7 +303,7 @@ class AuthoritativeRegistry:
     def current(self, identity: str) -> AuthorityBinding | None:
         return self._current.get(identity)
 
-    def receipts(self, identity: str | None = None) -> Tuple[CommitReceipt, ...]:
+    def receipts(self, identity: str | None = None) -> tuple[CommitReceipt, ...]:
         if identity is None:
             return tuple(self._receipts)
         return tuple(r for r in self._receipts if r.identity == identity)
@@ -309,10 +313,10 @@ class VerifiedResolver:
     """Resolver that treats local state as a cache, never as authority by possession alone."""
 
     def __init__(self, authorities: Iterable[Verifier], *, source: str):
-        self._authorities: Dict[str, Verifier] = {a.key_id: a for a in authorities}
-        self._cache: Dict[str, AuthorityBinding] = {}
-        self._known_authoritative_version: Dict[str, int] = {}
-        self._announced_digests: Dict[tuple[str, int], str] = {}
+        self._authorities: dict[str, Verifier] = {a.key_id: a for a in authorities}
+        self._cache: dict[str, AuthorityBinding] = {}
+        self._known_authoritative_version: dict[str, int] = {}
+        self._announced_digests: dict[tuple[str, int], str] = {}
         self.source = source
 
     def _verify_binding(self, binding: AuthorityBinding) -> None:

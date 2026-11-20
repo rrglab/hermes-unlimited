@@ -1,9 +1,8 @@
 """Offline contract tests: no model keys, network, or external effects."""
-import asyncio
 import json
 import unittest
 
-from unlimited.socratic_council import CouncilError, QUESTIONS, SocraticCouncil
+from unlimited.socratic_council import QUESTIONS, CouncilError, SocraticCouncil
 
 
 class CouncilTests(unittest.IsolatedAsyncioTestCase):

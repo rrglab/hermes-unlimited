@@ -1,5 +1,7 @@
 import unittest
+
 from unlimited.specialist_discovery import inspect_host_registry
+
 
 class HostRegistry:
     def __init__(self): self.queries=[]

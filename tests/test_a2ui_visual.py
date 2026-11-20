@@ -6,11 +6,11 @@ implicitly; updating them requires HERMES_VISUAL_UPDATE=1.
 import functools
 import http.server
 import os
-from pathlib import Path
 import shutil
 import tempfile
 import threading
 import unittest
+from pathlib import Path
 
 from unlimited.a2ui_adapter import company_surface
 from unlimited.runtime import ProviderStore

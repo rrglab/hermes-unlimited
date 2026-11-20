@@ -5,8 +5,13 @@ import unittest
 from pathlib import Path
 
 from unlimited.a2ui_adapter import (
-    A2UIValidationError, BASIC_CATALOG, company_surface,
-    request_surface, delete_surface, encode_jsonl, validate_envelope,
+    BASIC_CATALOG,
+    A2UIValidationError,
+    company_surface,
+    delete_surface,
+    encode_jsonl,
+    request_surface,
+    validate_envelope,
 )
 from unlimited.runtime import ProviderStore, UnverifiedIdentity
 

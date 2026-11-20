@@ -5,7 +5,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from unlimited.contracts import CompanySpec, ServiceSpec, TaskReceipt
+from unlimited.contracts import CompanySpec, TaskReceipt
 
 
 class ContractTests(unittest.TestCase):
