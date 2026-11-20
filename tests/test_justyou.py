@@ -29,8 +29,8 @@ class SessionStore:
 
 class JustYouVerifierTests(unittest.TestCase):
     def verifier(self, **changes):
-        params = dict(session_store=SessionStore(), resolver=Resolver(),
-                      profile_name="owner-test", session_token="session")
+        params = {"session_store": SessionStore(), "resolver": Resolver(),
+                  "profile_name": "owner-test", "session_token": "session"}
         params.update(changes)
         return JustYouVerifier(**params)
 
