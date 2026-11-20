@@ -1,3 +1,4 @@
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,7 +62,7 @@ class LedgerTests(unittest.TestCase):
     def test_duplicate_entry_rejected(self):
         args=("provider","tenant","company","request","entry-one","pre_control","5","60","identity")
         self.ledger.record(*args)
-        with self.assertRaises(Exception):
+        with self.assertRaises(sqlite3.IntegrityError):
             self.ledger.record(*args)
 
 
