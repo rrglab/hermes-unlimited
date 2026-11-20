@@ -172,8 +172,9 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                         identity_evidence=evidence)
                     store.attach_task(provider, tenant, company_id, request_id,
                                       response["task_id"], identity)
-                    return {"request": request_id, "state": "running",
-                            "task_id": response["task_id"], "executed": False}
+                    return {"request": request_id, "state": "blocked",
+                            "task_id": response["task_id"], "authorization_required": True,
+                            "executed": False}
                 if name == "unlimited_a2ui_surface":
                     from .a2ui_adapter import company_surface, request_surface
                     view = args["view"]
