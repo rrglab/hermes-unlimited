@@ -23,6 +23,9 @@ class KanbanTests(unittest.TestCase):
                                       task_id="request-1", title="Task", body="Body",
                                       identity_evidence=self.evidence)
         self.assertFalse(result["executed"])
+        self.assertEqual(result["status"], "AUTHORIZATION_REQUIRED")
+        self.assertIn("--initial-status", self.calls[0])
+        self.assertEqual(self.calls[0][self.calls[0].index("--initial-status") + 1], "blocked")
         self.assertIn("--idempotency-key", self.calls[0])
 
     def test_leading_dash_title_and_body_are_data_not_flags(self):
