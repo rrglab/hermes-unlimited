@@ -18,12 +18,12 @@ class StandaloneVerifierTests(unittest.TestCase):
         self.assertTrue(callable(VersionAnnouncement))
         isolated = subprocess.run(
             [sys.executable, "-c",
-             "import builtins; old=builtins.__import__; "
+             ("import builtins; old=builtins.__import__; "
              "builtins.__import__=lambda name,*a,**k: "
              "(_ for _ in ()).throw(ImportError('protocol denied')) "
              "if name=='protocol' or name.startswith('protocol.') else old(name,*a,**k); "
              "from unlimited.authoritative_binding import VerifiedResolver; "
-             "assert callable(VerifiedResolver)"],
+             "assert callable(VerifiedResolver)")],
             capture_output=True, text=True, check=False)
         self.assertEqual(isolated.returncode, 0, isolated.stderr)
 
