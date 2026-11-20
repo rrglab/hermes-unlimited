@@ -48,12 +48,13 @@ class LiveNativeKanbanTests(unittest.TestCase):
         )
         result = adapter.enqueue(**kwargs)
         self.assertFalse(result["executed"])
-        self.assertEqual(result["status"], "TASK_QUEUED")
+        self.assertEqual(result["status"], "AUTHORIZATION_REQUIRED")
         self.assertEqual(adapter.enqueue(**kwargs)["task_id"], result["task_id"])
         observed = adapter.result(
             tenant=tenant, assignee=profile, task_id=result["task_id"],
         )
         self.assertTrue(observed["found"], observed)
+        self.assertEqual(observed["status"], "blocked", observed)
         self.assertFalse(observed["completed"], observed)
         self.assertFalse(observed["independently_verified"])
         with self.assertRaises(PermissionError):

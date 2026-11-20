@@ -163,7 +163,7 @@ class ProviderStore:
             raise ValueError("TASK_ID_INVALID")
         with self._db() as db:
             updated = db.execute(
-                "UPDATE requests SET task_id=?,state='running' "
+                "UPDATE requests SET task_id=?,state='blocked' "
                 "WHERE provider=? AND tenant=? AND company=? AND request=? "
                 "AND (task_id IS NULL OR task_id=?)",
                 (task_id, provider, tenant, company, request, task_id)).rowcount
