@@ -1,4 +1,5 @@
 import pathlib
+import sqlite3
 import tempfile
 import unittest
 
@@ -42,14 +43,14 @@ class ProviderFlowTests(unittest.TestCase):
         self.store.create_company("owner", "customer-a", "agency", "Agency", i)
         self.store.publish_service("owner", "customer-a", "agency", "research", "Research", 0, "NOK", i)
         self.store.request_service("owner", "customer-a", "agency", "req-01", "research", {}, i)
-        with self.assertRaises(Exception):
+        with self.assertRaises(sqlite3.IntegrityError):
             self.store.request_service("owner", "customer-a", "agency", "req-01", "research", {}, i)
         self.assertEqual(len(self.store.list_requests("owner", "customer-a", "agency", i)), 1)
 
     def test_invalid_service_scope_rejected(self):
         i = self._identity("customer-a")
         self.store.create_company("owner", "customer-a", "agency", "Agency", i)
-        with self.assertRaises(Exception):
+        with self.assertRaises(sqlite3.IntegrityError):
             self.store.request_service("owner", "customer-a", "agency", "req-01", "missing", {}, i)
 
     def test_task_binding_and_result_are_tenant_scoped(self):
