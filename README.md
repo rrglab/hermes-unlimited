@@ -79,7 +79,8 @@ The canonical public manifest and `VERSION` must match. This source declares **0
 - `unlimited_economic_evaluate` compares already recorded **model-submitted, unverified** costs to a **model-submitted, unapproved** scenario cap. The output is a scenario, not a budget authorization, verified cost, ROI or execution decision. Missing cost inputs return insufficient evidence.
 - Model-submitted, unverified oversight time and AI/recovery costs in the service currency can be recorded per scoped service request and read back. These are unverified cost inputs, not a bank statement, verified benefit or measured ROI.
 - Provider/tenant-scoped company and service registry backed by SQLite.
-- Priced service publishing and durable customer request intake with idempotent native Kanban submission; completed worker execution is asynchronous.
+- Priced service publishing and durable customer request intake with idempotent native Kanban submission. **Since beta.8 all new requests are blocked pending separate trusted execution authorization; identity verification alone never dispatches a runnable worker.**
+- Previously created ready/running Kanban tasks from beta.7 are not retroactively quarantined; operators must inspect those boards before enabling dispatch. No automatic grant or promotion path is provided in the public core.
 - JustYou session + signed Hermes profile binding verifier, with no token files bundled.
 - Native Hermes Kanban task submission and scoped state reader, including request-to-task result association.
 - Fail-closed checks for missing identity, mismatched profile, tenant boundaries and duplicate request IDs.
