@@ -24,7 +24,7 @@ class PrivateGatewayBridgeTests(unittest.TestCase):
 
         def read(path, *args, **kwargs):
             if str(path) == "/proc/self/net/route":
-                return "Iface Destination\\neth0 00000000\\n"
+                return "Iface Destination\neth0 00000000\n"
             return real_read(path, *args, **kwargs)
 
         with patch.object(hook.Path, "read_text", read), patch.object(hook.subprocess, "Popen") as popen:
@@ -33,7 +33,7 @@ class PrivateGatewayBridgeTests(unittest.TestCase):
             popen.assert_not_called()
 
     def test_refuses_unowned_runtime_directory(self):
-        with patch.object(hook.Path, "read_text", return_value="Iface Destination\\n"), \
+        with patch.object(hook.Path, "read_text", return_value="Iface Destination\n"), \
              patch.object(hook.os, "getuid", return_value=424242), \
              patch.object(hook.subprocess, "Popen") as popen:
             with self.assertRaisesRegex(RuntimeError, "runtime directory ownership"):
@@ -41,7 +41,7 @@ class PrivateGatewayBridgeTests(unittest.TestCase):
             popen.assert_not_called()
 
     def test_bridge_targets_are_loopback_only_and_idempotent(self):
-        with patch.object(hook.Path, "read_text", return_value="Iface Destination\\n"), \
+        with patch.object(hook.Path, "read_text", return_value="Iface Destination\n"), \
              patch.object(hook.subprocess, "Popen") as popen:
             popen.return_value.poll.return_value = None
             hook.handle("gateway:startup", {})
