@@ -1,15 +1,13 @@
 """Offline regressions for publicly reported Hermes Unlimited QA defects."""
 import json
 import os
-import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
 
 from unlimited.comfyui import ComfyUI
-from unlimited.justyou_host import _private_bytes, LoopbackSessionStore
+from unlimited.justyou_host import LoopbackSessionStore, _private_bytes
 from unlimited.oversight_ledger import OversightLedger
 from unlimited.runtime import ProviderStore
 from unlimited.tools import register_company_tools
