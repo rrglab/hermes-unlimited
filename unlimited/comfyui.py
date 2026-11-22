@@ -3,7 +3,6 @@
 Point this client at a trusted ComfyUI deployment; never expose it directly to
 untrusted user-supplied URLs or workflow payloads without upstream policy checks.
 """
-import ipaddress
 import json
 import re
 from urllib.error import HTTPError, URLError
@@ -29,11 +28,7 @@ class ComfyUI:
             raise ValueError("ComfyUI base URL must be an HTTP(S) origin")
         # Network egress is not authorized by this optional adapter. Only an
         # explicit numeric loopback address is accepted; no DNS or metadata IP.
-        try:
-            host = ipaddress.ip_address(url.hostname)
-        except ValueError as exc:
-            raise ValueError("COMFYUI_LOOPBACK_ONLY") from exc
-        if not host.is_loopback:
+        if url.hostname not in ("127.0.0.1", "::1"):
             raise ValueError("COMFYUI_LOOPBACK_ONLY")
         if not isinstance(timeout, (int, float)) or timeout <= 0:
             raise ValueError("timeout must be positive")
