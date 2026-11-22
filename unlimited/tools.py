@@ -279,10 +279,9 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
             except (sqlite3.Error, ArithmeticError, OverflowError):
                 return json.dumps({"ok": False, "reason": "STORAGE_OR_ARITHMETIC_ERROR"}, sort_keys=True)
             except (PermissionError, RuntimeError, ValueError, KeyError, TypeError) as exc:
-                reason = str(exc)
-                if not reason.isupper() or not all(c.isupper() or c.isdigit() or c == "_" for c in reason):
-                    reason = type(exc).__name__
-                return json.dumps({"ok": False, "reason": reason}, sort_keys=True)
+                # Preserve the public generic error contract. Never leak
+                # the internal exception message or security policy details.
+                return json.dumps({"ok": False, "reason": type(exc).__name__}, sort_keys=True)
         return handler
 
     for schema in SCHEMAS:
