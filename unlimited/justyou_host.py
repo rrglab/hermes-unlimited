@@ -98,7 +98,7 @@ def load_resolver(bindings_path, authority_key_id, authority_key_file, authority
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
     if not isinstance(document, dict) or not isinstance(document.get("bindings", []), list) or not isinstance(document.get("announcements", []), list):
-        raise ValueError("JUSTYOU_BINDINGS_INVALID")
+        raise TypeError("JUSTYOU_BINDINGS_INVALID")
     for item in document.get("bindings", []):
         resolver.cache_binding(AuthorityBinding(
             identity=item["identity"], version=item["version"], carrier=item["carrier"],
