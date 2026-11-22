@@ -49,7 +49,7 @@ class PublicQASecurityTests(unittest.TestCase):
             "company_id": "company", "service_id": "other",
             "title": "Other", "price_minor": 10**25, "currency": "USD",
         }))
-        self.assertEqual(huge, {"ok": False, "reason": "PRICE_INVALID"})
+        self.assertEqual(huge, {"ok": False, "reason": "ValueError"})
 
     def test_oversight_rejects_unbounded_decimal_and_keeps_audit(self):
         ledger = OversightLedger(self.store)

@@ -48,7 +48,7 @@ class JustYouVerifier:
                     or receipt.resolved_version != binding.version
                     or getattr(receipt.status, "value", receipt.status) != "RESOLVED"):
                 raise ValueError("profile binding mismatch")
-        except Exception:
+        except Exception:  # noqa: BLE001 - identity boundary must fail closed on any provider error
             return {"verified": False, "reason": "JUSTYOU_UNVERIFIED"}
         return {
             "verified": True,
