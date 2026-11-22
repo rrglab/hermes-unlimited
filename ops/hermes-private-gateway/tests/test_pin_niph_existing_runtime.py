@@ -40,13 +40,18 @@ class NiphPinTests(unittest.TestCase):
 
 
         self.config = self.home / ".hermes" / "config.yaml"
-        self.config.write_text("gateway:\\n  multiplex_profiles: true\\n\\ndesktop:\\n  manage_launcher_entry: false\\n".replace("\\\\n", "\\n"))
+        self.config.write_text("""gateway:
+  multiplex_profiles: true
+
+desktop:
+  manage_launcher_entry: false
+""")
         self.desktop = self.home / ".local" / "share" / "applications" / "com.nousresearch.hermes.desktop"
         self.desktop.parent.mkdir(parents=True)
-        self.desktop.write_text(
-            "Type=Application\\nName=Hermes\\n"
-            "Exec=/usr/bin/systemctl --user start hermes-desktop-niph.service\\n".replace("\\\\n", "\\n")
-        )
+        self.desktop.write_text("""Type=Application
+Name=Hermes
+Exec=/usr/bin/systemctl --user start hermes-desktop-niph.service
+""")
 
     def test_read_only(self):
         self.assertEqual(pin.prepare(self.home), "PENDING")
@@ -98,17 +103,18 @@ class NiphPinTests(unittest.TestCase):
 
 
     def test_refuse_launcher_management_enabled(self):
-        self.config.write_text("desktop:\\n  manage_launcher_entry: true\\n".replace("\\\\n", "\\n"))
+        self.config.write_text(self.config.read_text().replace("manage_launcher_entry: false",
+                                                              "manage_launcher_entry: true"))
         with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
             pin.prepare(self.home, apply=True)
 
     def test_refuse_missing_launcher_optout(self):
-        self.config.write_text("gateway:\\n  multiplex_profiles: true\\n".replace("\\\\n", "\\n"))
+        self.config.write_text("gateway: {}")
         with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
             pin.prepare(self.home, apply=True)
 
     def test_refuse_direct_desktop_entry(self):
-        self.desktop.write_text("Exec=/home/fake/.local/bin/hermes desktop --skip-build\\n".replace("\\\\n", "\\n"))
+        self.desktop.write_text("Exec=/other")
         with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
             pin.prepare(self.home, apply=True)
 
