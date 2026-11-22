@@ -1,8 +1,6 @@
 ![Hermes Unlimited — by REHT](assets/brand/github-banner.svg)
 
 [![Hermes Unlimited by REHT](assets/brand/hermes-unlimited-badge.svg)](https://valoresearch.org/hermes-unlimited/)
-[![Tests](https://github.com/rrglab/hermes-unlimited/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/rrglab/hermes-unlimited/actions/workflows/tests.yml)
-[![CodeQL](https://github.com/rrglab/hermes-unlimited/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/rrglab/hermes-unlimited/actions/workflows/codeql.yml)
 [![Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 <div align="center">
@@ -255,15 +253,12 @@ hermes plugins doctor
 # Use an already approved Hermes installation; do not bootstrap dependencies automatically.
 ```
 
-Local green tests remain canonical. Public GitHub Actions independently run
-offline unit tests on Python 3.11–3.13 and CodeQL security analysis on pull
-requests. CI results are advisory and do not attest to live Hermes dispatch,
-customer effects, or production readiness. Dependabot checks action updates.
+Local unit tests and an independent external CQC/QA executor are required for validation. GitHub Actions are not an approved CI executor for this repository. Tests must run against an immutable commit SHA in an isolated environment, with separately retained evidence. Passing tests do not attest to live Hermes dispatch, customer effects or production readiness.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The seventeen registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
-- **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
+- **Network:** The seventeen registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered as a native tool in this beta.
+- **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier requires a host-pinned resolver. Only an independently trusted host provisioning operation may read signed bindings and the public verification key from operator-controlled private files; the plugin never selects its own authority root.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
 - **Approvals:** No auto-approval, disabling of Hermes guards or core override. Missing authorization fails closed. The plugin may submit work only after trusted JustYou verification.
