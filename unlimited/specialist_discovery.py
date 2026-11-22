@@ -40,7 +40,7 @@ def inspect_host_registry(registry, *, toolset, operation, objective=None, selec
     catalog = {}
     for definition in definitions:
         if not isinstance(definition, dict) or not isinstance(definition.get("function"), dict):
-            raise ValueError("HOST_DEFINITION_INVALID")
+            raise ValueError("HOST_DEFINITION_INVALID")  # noqa: TRY004 - stable untrusted schema contract
         info = definition["function"]
         name = info.get("name")
         params = info.get("parameters")
@@ -75,11 +75,11 @@ class LocalPluginDeclarations:
 
     def __init__(self, schemas):
         if not isinstance(schemas, (list, tuple)):
-            raise ValueError("PLUGIN_DECLARATIONS_INVALID")
+            raise ValueError("PLUGIN_DECLARATIONS_INVALID")  # noqa: TRY004 - stable schema contract
         self._schemas = {}
         for schema in schemas:
             if not isinstance(schema, dict) or not isinstance(schema.get("name"), str):
-                raise ValueError("PLUGIN_DECLARATION_INVALID")
+                raise ValueError("PLUGIN_DECLARATION_INVALID")  # noqa: TRY004 - stable schema contract
             if schema["name"] in self._schemas:
                 raise ValueError("PLUGIN_DECLARATION_DUPLICATE")
             self._schemas[schema["name"]] = schema
