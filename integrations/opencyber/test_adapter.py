@@ -28,6 +28,15 @@ class OpenCyberAdapterTests(unittest.TestCase):
         self.assertTrue(cap.requires_external_clearance)
         self.assertEqual(cap.scope, "url")
 
+    def test_self_declared_empty_effects_cannot_bypass_execution_clearance(self):
+        for shape in ("execute", "manage", "workflow"):
+            with self.subTest(shape=shape):
+                cap = module.read_tool_capability(self.tool(
+                    shape=shape, effects=[], scope="none",
+                    requires_engagement=False, returns_target_content=False
+                ))
+                self.assertTrue(cap.requires_external_clearance)
+
     def test_unknown_effect_fails_closed(self):
         with self.assertRaises(module.ContractError):
             module.read_tool_capability(self.tool(effects=["network", "new_effect"]))

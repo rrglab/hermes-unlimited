@@ -32,7 +32,9 @@ class ToolCapability:
     def requires_external_clearance(self) -> bool:
         # All OpenCyber execution remains operator-controlled. Even inspect
         # calls can spawn processes or access target-derived sensitive data.
-        return bool(self.effects) or self.scope != "none"
+        return (self.shape in {"execute", "manage", "workflow"}
+                or self.requires_engagement or self.returns_target_content
+                or bool(self.effects) or self.scope != "none")
 
 
 def read_tool_capability(tool: Mapping[str, Any]) -> ToolCapability:

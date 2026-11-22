@@ -3,7 +3,9 @@
 All provider, tenant and identity fields come exclusively from Hermes scoped
 configuration plus validated JustYou session, never user-supplied tool args.
 """
+import hashlib
 import json
+import sqlite3
 
 SCHEMAS = (
     {
@@ -166,7 +168,7 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                                 "task_id": item["task_id"], "executed": False}
                     response = adapter().enqueue(
                         tenant=tenant, assignee=ctx.profile_name,
-                        task_id=f"{company_id}:{request_id}",
+                        task_id="request-" + hashlib.sha256(f"{company_id}\0{request_id}".encode()).hexdigest(),
                         title=f"{company_id}/{item['service']}/{request_id}",
                         body=json.dumps(item["payload"], sort_keys=True),
                         identity_evidence=evidence)
@@ -272,8 +274,15 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                 else:
                     out = {"companies": store.list_companies(provider, tenant, identity)}
                 return json.dumps(out, sort_keys=True)
+            except sqlite3.IntegrityError:
+                return json.dumps({"ok": False, "reason": "REGISTRY_CONFLICT"}, sort_keys=True)
+            except (sqlite3.Error, ArithmeticError, OverflowError):
+                return json.dumps({"ok": False, "reason": "STORAGE_OR_ARITHMETIC_ERROR"}, sort_keys=True)
             except (PermissionError, RuntimeError, ValueError, KeyError, TypeError) as exc:
-                return json.dumps({"ok": False, "reason": type(exc).__name__}, sort_keys=True)
+                reason = str(exc)
+                if not reason.isupper() or not all(c.isupper() or c.isdigit() or c == "_" for c in reason):
+                    reason = type(exc).__name__
+                return json.dumps({"ok": False, "reason": reason}, sort_keys=True)
         return handler
 
     for schema in SCHEMAS:

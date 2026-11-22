@@ -3,7 +3,7 @@
 No external effects, no authorization decisions. Monetary values use Decimal.
 """
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from enum import Enum
 
 
@@ -28,7 +28,9 @@ class OversightEntry:
 
     @property
     def cost(self) -> Decimal:
-        return self.minutes * self.hourly_rate / Decimal(60)
+        with localcontext() as context:
+            context.prec = 28
+            return self.minutes * self.hourly_rate / Decimal(60)
 
 
 @dataclass(frozen=True)

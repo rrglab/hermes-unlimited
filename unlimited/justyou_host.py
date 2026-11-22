@@ -29,7 +29,7 @@ class _Session:
 class LoopbackSessionStore:
     def __init__(self, endpoint):
         parsed = urlsplit(endpoint)
-        if (parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost", "::1")
+        if (parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "::1")
                 or not parsed.port or parsed.username or parsed.password or parsed.query
                 or parsed.fragment or parsed.path not in ("", "/")):
             raise ValueError("JUSTYOU_LOOPBACK_ONLY")
@@ -61,10 +61,18 @@ class LoopbackSessionStore:
 
 
 def _private_bytes(path):
-    mode = os.stat(path).st_mode
-    if not stat.S_ISREG(mode) or mode & 0o077:
-        raise PermissionError("JUSTYOU_PRIVATE_FILE_REQUIRED")
-    with open(path, "rb") as handle:
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    if not hasattr(os, "O_NOFOLLOW"):
+        raise PermissionError("JUSTYOU_NOFOLLOW_UNAVAILABLE")
+    try:
+        fd = os.open(path, flags)
+    except OSError as exc:
+        raise PermissionError("JUSTYOU_PRIVATE_FILE_REQUIRED") from exc
+    with os.fdopen(fd, "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if (not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077
+                or info.st_uid != os.geteuid()):
+            raise PermissionError("JUSTYOU_PRIVATE_FILE_REQUIRED")
         data = handle.read(16385)
     if len(data) > 16384:
         raise ValueError("JUSTYOU_FILE_OVERSIZE")
@@ -89,6 +97,8 @@ def load_resolver(bindings_path, authority_key_id, authority_key_file, authority
     def dt(value):
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
+    if not isinstance(document, dict) or not isinstance(document.get("bindings", []), list) or not isinstance(document.get("announcements", []), list):
+        raise TypeError("JUSTYOU_BINDINGS_INVALID")
     for item in document.get("bindings", []):
         resolver.cache_binding(AuthorityBinding(
             identity=item["identity"], version=item["version"], carrier=item["carrier"],

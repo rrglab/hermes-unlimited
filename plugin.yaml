@@ -27,7 +27,7 @@ requires_env:
     description: Scoped JustYou session token; no default token is bundled
     secret: true
 python_dependencies:
-  - "cryptography>=41,<47"
+  - "cryptography>=41,<51"
 config_schema:
   HERMES_UNLIMITED_PROVIDER_ID: {type: str, default: "", description: "Provider identifier"}
   HERMES_UNLIMITED_TENANT_ID: {type: str, default: "", description: "Tenant identifier"}

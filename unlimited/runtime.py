@@ -104,7 +104,7 @@ class ProviderStore:
         self._ids(company, service)
         if not isinstance(title, str) or not title.strip():
             raise ValueError("SERVICE_TITLE_INVALID")
-        if type(price_minor) is not int or price_minor < 0:
+        if type(price_minor) is not int or not 0 <= price_minor <= 9223372036854775807:
             raise ValueError("PRICE_INVALID")
         if not isinstance(currency, str) or not re.fullmatch(r"[A-Z]{3}", currency):
             raise ValueError("CURRENCY_INVALID")
