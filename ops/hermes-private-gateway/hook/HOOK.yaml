@@ -1,0 +1,4 @@
+name: private-loopback-bridge
+description: Expose isolated gateway API to an owner-only Unix socket after startup
+events:
+  - gateway:startup
