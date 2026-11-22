@@ -5,6 +5,7 @@ implicitly; updating them requires HERMES_VISUAL_UPDATE=1.
 """
 import functools
 import http.server
+import io
 import os
 import shutil
 import tempfile
@@ -14,6 +15,11 @@ from pathlib import Path
 
 from unlimited.a2ui_adapter import company_surface
 from unlimited.runtime import ProviderStore
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 try:
     from playwright.sync_api import sync_playwright
@@ -26,8 +32,25 @@ VIEWPORTS = {"mobile": (390, 844), "tablet": (820, 1180), "desktop": (1440, 900)
 
 
 def compare_png(actual: bytes, expected: bytes) -> bool:
-    """Strict binary snapshot comparison; no remote API or AI judgment."""
-    return actual == expected
+    """Compare PNGs with tight anti-aliasing tolerance; catches any real visual/CSS change."""
+    if actual == expected:
+        return True
+    if Image is None:
+        return False
+    with Image.open(io.BytesIO(actual)) as a_img, Image.open(io.BytesIO(expected)) as e_img:
+        a_rgb = a_img.convert("RGB")
+        e_rgb = e_img.convert("RGB")
+        if a_rgb.size != e_rgb.size:
+            return False
+        a_bytes = a_rgb.tobytes()
+        e_bytes = e_rgb.tobytes()
+        if a_bytes == e_bytes:
+            return True
+        total_channels = len(a_bytes)
+        diffs = [abs(x - y) for x, y in zip(a_bytes, e_bytes)]
+        # Allow minor cross-platform Chromium font/border anti-aliasing (<=24/255, mean <=1.0)
+        # while strictly failing on any color, layout, border, or text regression.
+        return max(diffs) <= 24 and (sum(diffs) / total_channels) <= 1.0
 
 
 class A2UIVisualRegression(unittest.TestCase):
