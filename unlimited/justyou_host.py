@@ -126,12 +126,8 @@ def trusted_components(ctx, scoped_secret):
     if token is None:
         token = scoped_secret("HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN", "")
 
+    # The trust root is an authority decision made by the host, not plugin
+    # settings. A tenant/plugin must never supply its own verification key and
+    # thereby self-sign a supposedly trusted identity binding.
     resolver = getattr(ctx, "justyou_resolver", None)
-    if resolver is None:
-        bindings = scoped_secret("JUSTYOU_BINDINGS_FILE", "")
-        key_id = scoped_secret("JUSTYOU_AUTHORITY_KEY_ID", "")
-        key_file = scoped_secret("JUSTYOU_AUTHORITY_KEY_FILE", "")
-        if bindings and key_id and key_file:
-            resolver = load_resolver(bindings, key_id, key_file,
-                                     scoped_secret("JUSTYOU_AUTHORITY_KIND", "ed25519"))
     return store, resolver, token

@@ -32,7 +32,7 @@ try:
 except ImportError:
     Ed25519Authority = None
 
-from unlimited.justyou_host import trusted_components
+from unlimited.justyou_host import load_resolver, trusted_components
 
 
 @unittest.skipIf(Ed25519Authority is None, "canonical JustYou package unavailable")
@@ -109,7 +109,10 @@ class LiveCustomerAcceptance(unittest.TestCase):
                     "HERMES_UNLIMITED_REGISTRY_DB": str(state / "companies.db"),
                 }
                 secret = lambda name, default="": settings.get(name, default)
-                ctx = SimpleNamespace(profile_name="acceptancepublic1111", handlers={})
+                # Host pins the independent authority root before injecting the resolver.
+                host_resolver = load_resolver(bindings, "test-authority", public_key)
+                ctx = SimpleNamespace(profile_name="acceptancepublic1111", handlers={},
+                                      justyou_resolver=host_resolver)
                 ctx.get_config = lambda name, default="": settings.get(name, default)
                 store, resolver, token = trusted_components(ctx, secret)
                 from unlimited.justyou import JustYouVerifier

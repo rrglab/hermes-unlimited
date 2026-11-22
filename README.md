@@ -216,7 +216,7 @@ This is the **product direction**, not a statement that every capability above i
 
 ## Trusted profile setup
 
-The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_session_store`, `ctx.justyou_resolver`) or connects to a JustYou service through a loopback-only session validator and Ed25519-signed profile binding cache. It fails closed if either verification is unavailable. The required secret is `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN`, supplied through the host-scoped Hermes secret store. Configure the remaining non-secret values through the native Hermes plugin config:
+The plugin requires an **independently host-pinned** JustYou resolver (`ctx.justyou_resolver`). A loopback session validator may be provided by the host or configured using the endpoint below, but a plugin-controlled binding cache or authority public key cannot establish trust. It fails closed if the host resolver is absent. The required secret is `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN`, supplied through the host-scoped Hermes secret store. Configure the remaining non-secret values through the native Hermes plugin config:
 
 - `HERMES_UNLIMITED_PROVIDER_ID`
 - `HERMES_UNLIMITED_TENANT_ID`
@@ -224,15 +224,13 @@ The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_sess
 - `HERMES_UNLIMITED_REGISTRY_DB`
 - Optional `HERMES_UNLIMITED_HERMES_CLI`
 
-Without host injection, configure these additional non-secret plugin settings:
+Optional loopback session validator endpoint (never a source of binding authority):
 
 - `HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL` (`http://127.0.0.1:<port>` only)
-- `JUSTYOU_BINDINGS_FILE` (private, signed JustYou binding export)
-- `JUSTYOU_AUTHORITY_KEY_ID`
-- `JUSTYOU_AUTHORITY_KEY_FILE` (private, public verification key for Ed25519)
-- Optional `JUSTYOU_AUTHORITY_KIND` (defaults to `ed25519`; other values are rejected)
 
-The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; the plugin does not import an undeclared `protocol.authoritative_binding` package. `cryptography>=41,<47` is declared in `plugin.yaml`. A bindings JSON file is a cache, not authority; every binding and version announcement is signature-verified, and every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
+The trusted Hermes host must independently configure its authority key and construct `ctx.justyou_resolver` outside the plugin's mutable settings. Hosts can use `unlimited.justyou_host.load_resolver(bindings_path, trusted_authority_key_id, trusted_authority_key_file)` after independently pinning the trust-root file and checking its ownership. The plugin never loads an authority root from `config.yaml`. Without a host resolver, identity-dependent tools remain unavailable.
+
+The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; `cryptography>=41,<51` is declared in `plugin.yaml`. A bindings JSON file is only a cache; every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
 
 The session token is read from the trusted Hermes profile secret store; a token-file fallback is not implemented. Do not put credentials, customer data or keys in the plugin repository.
 
