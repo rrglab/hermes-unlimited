@@ -68,7 +68,7 @@ The original [NousResearch Hermes Agent catalog entry #153503](https://github.co
 
 ## Versioned release contract
 
-The canonical public manifest and `VERSION` must match. This source declares **0.2.0-beta.6** with seventeen native Hermes tools as an experimental prerelease; the release tag is published only after exact-commit qualification. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
+The canonical public manifest and `VERSION` must match. This source declares **0.2.0-beta.8** with seventeen native Hermes tools as an experimental prerelease; the release tag is published only after exact-commit qualification. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
 
 ## What works
 
@@ -253,7 +253,8 @@ Do not set the board to `default` or reuse a board across customers. Missing boa
 
 ```bash
 python3 -m unittest discover -s tests -v
-hermes plugins validate . --install-deps
+hermes plugins doctor
+# Use an already approved Hermes installation; do not bootstrap dependencies automatically.
 ```
 
 Local green tests remain canonical. Public GitHub Actions independently run
@@ -263,7 +264,7 @@ customer effects, or production readiness. Dependabot checks action updates.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The ten registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
+- **Network:** The seventeen registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
 - **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
