@@ -1,0 +1,15 @@
+[Unit]
+Description=Owner-loopback bridge to network-isolated Hermes gateway %i
+Requires=hermes-gateway.service
+After=hermes-gateway.service
+PartOf=hermes-gateway.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:%i,bind=127.0.0.1,reuseaddr,fork UNIX-CONNECT:%t/hermes-gw%i.sock
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+Restart=on-failure
+RestartSec=2
