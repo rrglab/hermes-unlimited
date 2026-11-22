@@ -28,7 +28,7 @@ SCHEMAS = (
     },
     {
         "name": "unlimited_service_request",
-        "description": "Record a customer service request; recording does not execute it.",
+        "description": "Record a service request and enqueue a blocked Kanban task; no agent executes without separate trusted approval.",
         "parameters": {"type": "object", "properties": {
             "company_id": {"type": "string"}, "request_id": {"type": "string"},
             "service_id": {"type": "string"}, "payload": {"type": "object"}},
