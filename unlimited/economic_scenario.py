@@ -31,7 +31,7 @@ def evaluate_cost_scenario(ledger, provider, tenant, company, request, identity,
               "net_value": None, "roi": None, "customer_outcome_verified": False,
               "estimated_cost": report["total_cost"],
               "costs_recorded": report["costs_recorded"]}
-    if not report["costs_recorded"]:
+    if not report["costs_recorded"] and Decimal(report["oversight_cost"]) == 0:
         result.update({"comparison": "INSUFFICIENT_COST_INPUT", "difference": None,
                        "within_scenario_cap": None})
         return result
