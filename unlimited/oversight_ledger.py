@@ -3,7 +3,7 @@
 Requires trusted JustYou verification via ProviderStore; never accepts an agent's
 self-report as independent verification or as a monetary benefit claim.
 """
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from .human_oversight_economics import (
     DeliveryEconomics,
@@ -11,6 +11,21 @@ from .human_oversight_economics import (
     OversightPhase,
     evaluate,
 )
+
+
+MAX_AMOUNT = Decimal("1000000000000")
+
+
+def _bounded_amount(raw):
+    if not isinstance(raw, str) or not raw or len(raw) > 40:
+        raise ValueError("COST_INVALID")
+    try:
+        amount = Decimal(raw)
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError("COST_INVALID") from exc
+    if not amount.is_finite() or amount < 0 or amount > MAX_AMOUNT:
+        raise ValueError("COST_INVALID")
+    return amount
 
 
 class OversightLedger:
@@ -24,6 +39,11 @@ class OversightLedger:
                 PRIMARY KEY(provider, tenant, company, request, entry_id),
                 FOREIGN KEY(provider, tenant, company, request)
                 REFERENCES requests(provider, tenant, company, request)
+            )""")
+            db.execute("""CREATE TABLE IF NOT EXISTS oversight_cost_audit (
+                provider TEXT NOT NULL, tenant TEXT NOT NULL, company TEXT NOT NULL,
+                request TEXT NOT NULL, ai_cost TEXT NOT NULL, recovery_cost TEXT NOT NULL,
+                recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )""")
             db.execute("""CREATE TABLE IF NOT EXISTS oversight_costs (
                 provider TEXT NOT NULL, tenant TEXT NOT NULL, company TEXT NOT NULL,
@@ -52,7 +72,9 @@ class OversightLedger:
         item = self._request(provider, tenant, company, request, identity)
         self.store._ids(entry_id)
         try:
-            entry = OversightEntry(request, OversightPhase(phase), Decimal(str(minutes)), Decimal(str(hourly_rate)))
+            entry = OversightEntry(request, OversightPhase(phase), _bounded_amount(minutes), _bounded_amount(hourly_rate))
+            if entry.cost > MAX_AMOUNT:
+                raise ValueError("OVERSIGHT_INVALID")
         except (ArithmeticError, ValueError) as exc:
             raise ValueError("OVERSIGHT_INVALID") from exc
         with self.store._db() as db:
@@ -65,12 +87,15 @@ class OversightLedger:
     def record_costs(self, provider, tenant, company, request, ai_cost, recovery_cost, identity):
         item = self._request(provider, tenant, company, request, identity)
         try:
-            ai, recovery = Decimal(str(ai_cost)), Decimal(str(recovery_cost))
+            ai, recovery = _bounded_amount(ai_cost), _bounded_amount(recovery_cost)
         except ArithmeticError as exc:
             raise ValueError("COST_INVALID") from exc
         if not ai.is_finite() or not recovery.is_finite() or min(ai, recovery) < 0:
             raise ValueError("COST_INVALID")
         with self.store._db() as db:
+            db.execute("""INSERT INTO oversight_cost_audit
+                (provider,tenant,company,request,ai_cost,recovery_cost) VALUES(?,?,?,?,?,?)""",
+                (provider, tenant, company, request, str(ai), str(recovery)))
             db.execute("""INSERT INTO oversight_costs VALUES(?,?,?,?,?,?)
                 ON CONFLICT(provider,tenant,company,request)
                 DO UPDATE SET ai_cost=excluded.ai_cost,recovery_cost=excluded.recovery_cost""",
