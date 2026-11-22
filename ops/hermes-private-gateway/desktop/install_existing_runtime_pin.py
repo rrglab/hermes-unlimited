@@ -1,7 +1,8 @@
-"""Pin Hermes Desktop to a verified existing source installation, avoiding false first-run bootstrap.
+"""Pin the installed Hermes source for Desktop only, without changing other CLI calls.
 
-This only updates the user's existing .desktop launcher; no installer, network or
-model/provider operation is performed. Default invocation is read-only.
+Hermes Desktop rewrites the .desktop launcher on startup. Therefore the already
+published user CLI wrapper (the entrypoint used by the .desktop launcher) is the
+durable interception point. This tool defaults to validation without mutation.
 """
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import argparse
 import os
 from pathlib import Path
 import shutil
+import shlex
 import tempfile
 
 
@@ -18,56 +20,56 @@ class LaunchPinError(RuntimeError):
 
 def pin(home: Path, *, apply: bool = False) -> str:
     home = home.expanduser().resolve()
-    if any(c.isspace() for c in str(home)) or any(c in str(home) for c in ('"', "'", "\\")):
-        raise LaunchPinError("unsupported home path for literal desktop Exec")
-
     runtime = home / ".hermes" / "hermes-agent"
     cli = runtime / ".hermes" / "bin" / "hermes"
-    published = home / ".local" / "bin" / "hermes"
+    wrapper = home / ".local" / "bin" / "hermes"
     desktop = home / ".local" / "share" / "applications" / "com.nousresearch.hermes.desktop"
 
     if not (runtime / ".git").exists() or not (runtime / "hermes_cli" / "main.py").is_file():
         raise LaunchPinError("installed Hermes source root could not be verified")
-    if not cli.is_file() or not os.access(cli, os.X_OK) or not published.is_file():
-        raise LaunchPinError("installed Hermes launcher not executable or not published")
-    if desktop.is_symlink() or not desktop.is_file():
-        raise LaunchPinError("desktop entry missing or is a symlink")
-    if desktop.stat().st_uid != os.getuid():
-        raise LaunchPinError("desktop entry not owned by calling user")
+    if not cli.is_file() or not os.access(cli, os.X_OK):
+        raise LaunchPinError("installed Hermes CLI not executable")
+    if not wrapper.is_file() or wrapper.is_symlink() or wrapper.stat().st_uid != os.getuid():
+        raise LaunchPinError("published CLI wrapper missing, foreign-owned, or is a symlink")
+    if not desktop.is_file() or desktop.is_symlink() or desktop.stat().st_uid != os.getuid():
+        raise LaunchPinError("installed Desktop entry missing or foreign-owned")
 
-    expected = f"Exec={published} desktop --skip-build"
-    pinned = (
-        f"Exec=env HERMES_DESKTOP_HERMES_ROOT={runtime} "
-        f"{published} desktop --skip-build"
+    old = f"#!/bin/sh\nexec {shlex.quote(str(cli))} \"$@\"\n"
+    new = (
+        "#!/bin/sh\n"
+        "if [ \"${1:-}\" = desktop ]; then\n"
+        f"  export HERMES_DESKTOP_HERMES_ROOT={shlex.quote(str(runtime))}\n"
+        "fi\n"
+        f"exec {shlex.quote(str(cli))} \"$@\"\n"
     )
-    raw = desktop.read_text(encoding="utf-8")
-    rows = raw.splitlines()
-    existing = [row for row in rows if row.startswith("Exec=")]
-    if existing == [pinned]:
+    original = wrapper.read_text(encoding="utf-8")
+    if original == new:
         return "ALREADY_PINNED"
-    if existing != [expected] or raw.count(expected) != 1:
-        raise LaunchPinError("desktop entry has an unexpected Exec; refusing change")
+    if original != old:
+        raise LaunchPinError("unexpected published Hermes wrapper; refusing change")
+    desktop_exec = f"Exec={wrapper} desktop --skip-build"
+    if desktop_exec not in desktop.read_text(encoding="utf-8").splitlines():
+        raise LaunchPinError("Desktop does not invoke published CLI wrapper")
     if not apply:
         return "PENDING"
 
-    backup = desktop.with_name(desktop.name + ".pre-pinned-runtime")
+    backup = wrapper.with_name(wrapper.name + ".pre-desktop-runtime-pin")
     if backup.exists() or backup.is_symlink():
         raise LaunchPinError("backup already exists; refusing to overwrite")
-    shutil.copy2(desktop, backup)
-    payload = raw.replace(expected, pinned, 1)
-    tmp = None
+    shutil.copy2(wrapper, backup)
+    temporary = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8", dir=desktop.parent,
-            prefix=desktop.name + ".", suffix=".tmp", delete=False
-        ) as f:
-            tmp = Path(f.name)
-            f.write(payload)
-        tmp.chmod(desktop.stat().st_mode & 0o777)
-        os.replace(tmp, desktop)
+            mode="w", encoding="utf-8", dir=wrapper.parent,
+            prefix=wrapper.name + ".", suffix=".tmp", delete=False
+        ) as file:
+            temporary = Path(file.name)
+            file.write(new)
+        temporary.chmod(wrapper.stat().st_mode & 0o777)
+        os.replace(temporary, wrapper)
     finally:
-        if tmp is not None:
-            tmp.unlink(missing_ok=True)
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return "APPLIED"
 
 
