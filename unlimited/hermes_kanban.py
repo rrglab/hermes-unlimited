@@ -79,7 +79,7 @@ class HermesKanban:
             raise ValueError("TASK_ID_INVALID")
         items = self._invoke(["list", "--tenant", tenant, "--json"])
         if not isinstance(items, list):
-            raise RuntimeError("TASK_LIST_INVALID")
+            raise RuntimeError("TASK_LIST_INVALID")  # noqa: TRY004 - untrusted CLI contract
         matches = [x for x in items if isinstance(x, dict)
                    and str(x.get("id")) == task_id and x.get("tenant") == tenant
                    and x.get("assignee") == assignee
