@@ -1,0 +1,50 @@
+diff --git a/hermes_state_gateway.py b/hermes_state_gateway.py
+--- a/hermes_state_gateway.py
++++ b/hermes_state_gateway.py
+@@ -375,21 +375,36 @@
+         )
+ 
+     def replace_gateway_routing_entries(self, entries: dict[str, str], *, scope: str = "") -> set[str]:
+-        """Atomically replace the routing index for *scope* (keys absent from *entries*
+-        are removed); other scopes untouched. Returns the keys skipped as retired routes, which
+-        the sessions.json mirror must leave out too."""
+-        from hermes_state_mutation_retirement import ROUTE_RETIRED_SQL, route_retired_params
++        """Atomically replace the routing index for *scope* without per-route SQLite GIL handoffs.
++
++        All retirement fences use the original ROUTE_RETIRED_SQL, now evaluated against
++        each candidate selected by json_each instead of executing one statement per row.
++        The large JSON payload is prepared BEFORE acquiring the state writer mutex.
++        """
++        from hermes_state_mutation_retirement import ROUTE_RETIRED_SQL, route_retired_params, route_namespace
+         now = time.time()
+-        rows = [{'scope': scope, 'key': k, **route_retired_params(k, v, now)} for k, v in entries.items() if k and v]
++        rows = [(k, v, route_namespace(k)) for k, v in entries.items() if k and v]
++        payload = json.dumps(rows, separators=(",", ":")) if rows else "[]"
++        # Only :entry and :ns vary by row; the other retirement-policy values are
++        # pinned to this write's consistent clock and the existing policy constants.
++        predicate = ROUTE_RETIRED_SQL.replace(":entry", "candidate.entry_json").replace(
++            ":ns", "candidate.ns")
++        insert_sql = (
++            "WITH candidate AS (SELECT json_extract(value, '$[0]') AS route_key, "
++            "json_extract(value, '$[1]') AS entry_json, "
++            "json_extract(value, '$[2]') AS ns FROM json_each(:payload)) "
++            "INSERT INTO gateway_routing (scope, session_key, entry_json, updated_at) "
++            "SELECT :scope, candidate.route_key, candidate.entry_json, :now "
++            "FROM candidate WHERE NOT " + predicate)
++
+         def _do(conn):
+             conn.execute("DELETE FROM gateway_routing WHERE scope = ?", (scope,))
+             if rows:
+-                conn.executemany(
+-                    "INSERT INTO gateway_routing (scope, session_key, entry_json, updated_at) "
+-                    "SELECT :scope, :key, :entry, :now WHERE NOT " + ROUTE_RETIRED_SQL,
+-                    rows)
++                params = route_retired_params(rows[0][0], rows[0][1], now)
++                params = {k: v for k, v in params.items() if k not in {"entry", "ns"}}
++                conn.execute(insert_sql, {"scope": scope, "payload": payload, **params})
+             kept = {r[0] for r in conn.execute("SELECT session_key FROM gateway_routing WHERE scope = ?", (scope,))}
+-            return {row['key'] for row in rows} - kept
++            return {key for key, _, _ in rows} - kept
+         return self._execute_write(_do)
+ 
+     def load_gateway_routing_entries(self, *, scope: str = "") -> dict[str, str]:
