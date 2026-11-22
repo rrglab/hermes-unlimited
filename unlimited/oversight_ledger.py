@@ -12,8 +12,7 @@ from .human_oversight_economics import (
     evaluate,
 )
 
-
-MAX_AMOUNT = Decimal("1000000000000")
+MAX_AMOUNT = Decimal(1000000000000)
 
 
 def _bounded_amount(raw):
