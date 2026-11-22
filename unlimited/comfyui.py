@@ -3,13 +3,19 @@
 Point this client at a trusted ComfyUI deployment; never expose it directly to
 untrusted user-supplied URLs or workflow payloads without upstream policy checks.
 """
+import ipaddress
 import json
 import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 _ID = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
 
 
 class ComfyUIError(RuntimeError):
@@ -17,15 +23,23 @@ class ComfyUIError(RuntimeError):
 
 
 class ComfyUI:
-    def __init__(self, base_url="http://127.0.0.1:8188", *, timeout=30, opener=urlopen):
+    def __init__(self, base_url="http://127.0.0.1:8188", *, timeout=30, opener=None):
         url = urlsplit(base_url)
         if url.scheme not in ("http", "https") or not url.hostname or url.username or url.password or url.query or url.fragment or url.path not in ("", "/"):
             raise ValueError("ComfyUI base URL must be an HTTP(S) origin")
+        # Network egress is not authorized by this optional adapter. Only an
+        # explicit numeric loopback address is accepted; no DNS or metadata IP.
+        try:
+            host = ipaddress.ip_address(url.hostname)
+        except ValueError as exc:
+            raise ValueError("COMFYUI_LOOPBACK_ONLY") from exc
+        if not host.is_loopback:
+            raise ValueError("COMFYUI_LOOPBACK_ONLY")
         if not isinstance(timeout, (int, float)) or timeout <= 0:
             raise ValueError("timeout must be positive")
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self._open = opener
+        self._open = opener or build_opener(ProxyHandler({}), _NoRedirect()).open
 
     def _request(self, path, *, payload=None, binary=False):
         data = None if payload is None else json.dumps(payload).encode("utf-8")
