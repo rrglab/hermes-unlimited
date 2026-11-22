@@ -1,7 +1,7 @@
 diff --git a/gateway/session_hosted_service.py b/gateway/session_hosted_service.py
 --- a/gateway/session_hosted_service.py
 +++ b/gateway/session_hosted_service.py
-@@ -337,6 +337,9 @@ async def _ensure_hosted_service(runner, authority):
+@@ -338,3 +338,6 @@ async def _ensure_hosted_service(runner, authority):
 +    service = getattr(authority, 'hosted_room_service', None)
 +    if service is not None and getattr(service, '_transport_installed', False):
 +        return
