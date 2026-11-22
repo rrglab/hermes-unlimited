@@ -102,6 +102,17 @@ class PublicQASecurityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             LoopbackSessionStore("http://localhost:8999")
 
+    def test_missing_ai_costs_can_never_prove_within_cap(self):
+        from unlimited.economic_scenario import evaluate_cost_scenario
+        ledger = OversightLedger(self.store)
+        ledger.record("provider", "tenant", "company", "request",
+                      "entry", "pre_control", "6", "100", "identity")
+        result = evaluate_cost_scenario(
+            ledger, "provider", "tenant", "company", "request", "identity", scenario_cap="100"
+        )
+        self.assertEqual(result["comparison"], "INSUFFICIENT_COST_INPUT")
+        self.assertIsNone(result["within_scenario_cap"])
+
     def test_economic_scenario_counts_only_recorded_human_cost(self):
         from unlimited.economic_scenario import evaluate_cost_scenario
         ledger = OversightLedger(self.store)
