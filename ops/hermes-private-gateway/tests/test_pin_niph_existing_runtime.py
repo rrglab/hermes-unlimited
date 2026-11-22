@@ -38,6 +38,21 @@ class NiphPinTests(unittest.TestCase):
             "NoNewPrivileges=yes\n"
         )
 
+
+        self.config = self.home / ".hermes" / "config.yaml"
+        self.config.write_text("""gateway:
+  multiplex_profiles: true
+
+desktop:
+  manage_launcher_entry: false
+""")
+        self.desktop = self.home / ".local" / "share" / "applications" / "com.nousresearch.hermes.desktop"
+        self.desktop.parent.mkdir(parents=True)
+        self.desktop.write_text("""Type=Application
+Name=Hermes
+Exec=/usr/bin/systemctl --user start hermes-desktop-niph.service
+""")
+
     def test_read_only(self):
         self.assertEqual(pin.prepare(self.home), "PENDING")
         self.assertFalse((self.unit.parent / (self.unit.name + ".d")).exists())
@@ -85,6 +100,23 @@ class NiphPinTests(unittest.TestCase):
         (folder / pin.DROPIN_NAME).symlink_to(self.unit)
         with self.assertRaisesRegex(pin.UnsafeService, "symbolic"):
             pin.prepare(self.home)
+
+
+    def test_refuse_launcher_management_enabled(self):
+        self.config.write_text(self.config.read_text().replace("manage_launcher_entry: false",
+                                                              "manage_launcher_entry: true"))
+        with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
+            pin.prepare(self.home, apply=True)
+
+    def test_refuse_missing_launcher_optout(self):
+        self.config.write_text("gateway: {}")
+        with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
+            pin.prepare(self.home, apply=True)
+
+    def test_refuse_direct_desktop_entry(self):
+        self.desktop.write_text("Exec=/other")
+        with self.assertRaisesRegex(pin.UnsafeService, "not protected"):
+            pin.prepare(self.home, apply=True)
 
 
 if __name__ == "__main__":
