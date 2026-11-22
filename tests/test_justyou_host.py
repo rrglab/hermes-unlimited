@@ -41,7 +41,7 @@ class HostBridgeTests(unittest.TestCase):
     def test_trusted_host_resolver_overrides_plugin_fields(self):
         host_resolver = object()
         settings = {"JUSTYOU_AUTHORITY_KEY_FILE": "/attacker/key"}
-        store, resolver, token = trusted_components(
+        _store, resolver, token = trusted_components(
             SimpleNamespace(justyou_resolver=host_resolver, justyou_session_token="token"),
             lambda name, default="": settings.get(name, default))
         self.assertIs(resolver, host_resolver)
