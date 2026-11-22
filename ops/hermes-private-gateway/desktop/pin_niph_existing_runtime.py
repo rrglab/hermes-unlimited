@@ -20,6 +20,34 @@ class UnsafeService(ValueError):
     pass
 
 
+def protected_niph_desktop_entry(home: Path) -> bool:
+    """Refuse to pin a service if Hermes may overwrite the NIPH desktop entry.
+
+    Hermes's supported desktop.manage_launcher_entry=false is an explicit
+    opt-out for an existing launcher. Require exactly this top-level setting
+    and an existing .desktop entry targeting the isolated service.
+    """
+    config = home / ".hermes" / "config.yaml"
+    entry = home / ".local" / "share" / "applications" / "com.nousresearch.hermes.desktop"
+    for file in (config, entry):
+        if file.is_symlink() or not file.is_file() or file.stat().st_uid != os.getuid():
+            return False
+    config_lines = config.read_text(encoding="utf-8").splitlines()
+    section_count, managed = 0, []
+    active = False
+    for line in config_lines:
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not line[0].isspace():
+            active = line.strip() == "desktop:"
+            section_count += int(active)
+        elif active and line.startswith("  manage_launcher_entry:"):
+            managed.append(line.partition(":")[2].split("#", 1)[0].strip().lower())
+    return (section_count == 1 and managed == ["false"] and
+            f"Exec=/usr/bin/systemctl --user start {UNIT_NAME}" in
+            entry.read_text(encoding="utf-8").splitlines())
+
+
 def prepare(home: Path, *, apply: bool = False) -> str:
     home = home.expanduser().resolve()
     systemd = home / ".config" / "systemd" / "user"
@@ -27,6 +55,8 @@ def prepare(home: Path, *, apply: bool = False) -> str:
     launch_script = home / ".hermes" / "niph-desktop-isolated-launcher.py"
     source = home / ".hermes" / "hermes-agent"
     exe = source / ".hermes" / "bin" / "hermes"
+    if not protected_niph_desktop_entry(home):
+        raise UnsafeService("NIPH Desktop launcher not protected: require desktop.manage_launcher_entry=false")
     dropdir = systemd / f"{UNIT_NAME}.d"
     dropin = dropdir / DROPIN_NAME
     if not (source / ".git").exists() or not (source / "hermes_cli" / "main.py").is_file():
