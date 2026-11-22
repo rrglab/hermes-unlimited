@@ -5,11 +5,49 @@ untrusted user-supplied URLs or workflow payloads without upstream policy checks
 """
 import json
 import re
+from ipaddress import ip_address
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 _ID = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
+_HOST_RE = re.compile(r"^[a-z0-9.-]+$")
+_FORBIDDEN_SUFFIXES = (".localhost", ".local", ".internal", ".home.arpa")
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+def _default_open(request, timeout):
+    return build_opener(ProxyHandler({}), _NoRedirect).open(request, timeout=timeout)
+
+
+def _validate_origin(base_url):
+    if not isinstance(base_url, str) or not base_url:
+        raise ValueError("ComfyUI base URL must be a trusted loopback or public HTTPS origin")
+    url = urlsplit(base_url)
+    if (url.scheme not in ("http", "https") or not url.hostname
+            or url.username or url.password or url.query or url.fragment
+            or url.path not in ("", "/")):
+        raise ValueError("ComfyUI base URL must be a trusted loopback or public HTTPS origin")
+    host = url.hostname.lower().rstrip(".")
+    try:
+        addr = ip_address(host)
+    except ValueError:
+        if (url.scheme != "https" or host == "localhost" or "." not in host
+                or not _HOST_RE.fullmatch(host) or host.startswith(".") or ".." in host
+                or any(host.endswith(suffix) for suffix in _FORBIDDEN_SUFFIXES)
+                or any(not lbl or lbl.startswith("-") or lbl.endswith("-") for lbl in host.split("."))):
+            raise ValueError("ComfyUI remote origin must be a public HTTPS hostname") from None
+    else:
+        if addr.is_loopback:
+            if host not in ("127.0.0.1", "::1"):
+                raise ValueError("ComfyUI loopback origin must be 127.0.0.1 or ::1")
+        elif not addr.is_global or url.scheme != "https":
+            raise ValueError("ComfyUI private, link-local, or non-HTTPS remote IP is forbidden")
+    return base_url.rstrip("/")
 
 
 class ComfyUIError(RuntimeError):
@@ -17,15 +55,12 @@ class ComfyUIError(RuntimeError):
 
 
 class ComfyUI:
-    def __init__(self, base_url="http://127.0.0.1:8188", *, timeout=30, opener=urlopen):
-        url = urlsplit(base_url)
-        if url.scheme not in ("http", "https") or not url.hostname or url.username or url.password or url.query or url.fragment or url.path not in ("", "/"):
-            raise ValueError("ComfyUI base URL must be an HTTP(S) origin")
-        if not isinstance(timeout, (int, float)) or timeout <= 0:
+    def __init__(self, base_url="http://127.0.0.1:8188", *, timeout=30, opener=None):
+        self.base_url = _validate_origin(base_url)
+        if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
             raise ValueError("timeout must be positive")
-        self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self._open = opener
+        self._open = _default_open if opener is None else opener
 
     def _request(self, path, *, payload=None, binary=False):
         data = None if payload is None else json.dumps(payload).encode("utf-8")

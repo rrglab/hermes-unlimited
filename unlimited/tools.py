@@ -4,6 +4,7 @@ All provider, tenant and identity fields come exclusively from Hermes scoped
 configuration plus validated JustYou session, never user-supplied tool args.
 """
 import json
+import sqlite3
 
 SCHEMAS = (
     {
@@ -272,7 +273,8 @@ def register_company_tools(ctx, scoped_secret, scoped_identity, declared_schemas
                 else:
                     out = {"companies": store.list_companies(provider, tenant, identity)}
                 return json.dumps(out, sort_keys=True)
-            except (PermissionError, RuntimeError, ValueError, KeyError, TypeError) as exc:
+            except (PermissionError, RuntimeError, ValueError, KeyError, TypeError,
+                    OverflowError, sqlite3.Error) as exc:
                 return json.dumps({"ok": False, "reason": type(exc).__name__}, sort_keys=True)
         return handler
 

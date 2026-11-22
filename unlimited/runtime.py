@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 IDENT = re.compile(r"^[a-z][a-z0-9-]{1,63}$")
+MAX_PRICE_MINOR = (1 << 63) - 1
 
 
 class UnverifiedIdentity(PermissionError):
@@ -104,7 +105,7 @@ class ProviderStore:
         self._ids(company, service)
         if not isinstance(title, str) or not title.strip():
             raise ValueError("SERVICE_TITLE_INVALID")
-        if type(price_minor) is not int or price_minor < 0:
+        if type(price_minor) is not int or price_minor < 0 or price_minor > MAX_PRICE_MINOR:
             raise ValueError("PRICE_INVALID")
         if not isinstance(currency, str) or not re.fullmatch(r"[A-Z]{3}", currency):
             raise ValueError("CURRENCY_INVALID")

@@ -70,6 +70,29 @@ class ComfyUITests(unittest.TestCase):
         with self.assertRaises(ComfyUIError):
             self.client.history("job")
 
+    def test_reject_ssrf_private_metadata_and_non_https_remote_origins(self):
+        for bad in (
+            "http://169.254.169.254",
+            "https://169.254.169.254",
+            "http://10.0.0.1:8188",
+            "https://10.0.0.1",
+            "http://192.168.1.5:8188",
+            "http://172.16.0.1:8188",
+            "http://0.0.0.0:8188",
+            "http://localhost:8188",
+            "https://localhost:8188",
+            "http://comfy.example.com",
+            "https://comfy.internal",
+            "https://comfy.local",
+        ):
+            with self.subTest(url=bad), self.assertRaises(ValueError):
+                ComfyUI(bad)
+        with self.assertRaises(ValueError):
+            ComfyUI("http://127.0.0.1:8188", timeout=True)
+        self.assertEqual(ComfyUI("http://127.0.0.1:8188").base_url, "http://127.0.0.1:8188")
+        self.assertEqual(ComfyUI("http://[::1]:8188").base_url, "http://[::1]:8188")
+        self.assertEqual(ComfyUI("https://comfy.example.com").base_url, "https://comfy.example.com")
+
 
 if __name__ == "__main__":
     unittest.main()

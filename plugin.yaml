@@ -26,17 +26,17 @@ requires_env:
   - name: HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN
     description: Scoped JustYou session token; no default token is bundled
     secret: true
+optional_env:
+  - HERMES_UNLIMITED_JUSTYOU_AUTHORITY_PUBLIC_KEY
 python_dependencies:
-  - "cryptography>=41,<47"
+  - "cryptography>=41,<51"
 config_schema:
   HERMES_UNLIMITED_PROVIDER_ID: {type: str, default: "", description: "Provider identifier"}
   HERMES_UNLIMITED_TENANT_ID: {type: str, default: "", description: "Tenant identifier"}
   HERMES_UNLIMITED_JUSTYOU_IDENTITY: {type: str, default: "", description: "JustYou identity"}
   HERMES_UNLIMITED_REGISTRY_DB: {type: str, default: "", description: "SQLite registry path"}
   HERMES_UNLIMITED_HERMES_CLI: {type: str, default: "hermes", description: "Hermes CLI path"}
-  HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL: {type: str, default: "", description: "Loopback JustYou validator URL"}
-  JUSTYOU_BINDINGS_FILE: {type: str, default: "", description: "Private signed binding cache path"}
-  JUSTYOU_AUTHORITY_KEY_FILE: {type: str, default: "", description: "Public authority verifier key file"}
-  JUSTYOU_AUTHORITY_KEY_ID: {type: str, default: "", description: "Authority key identifier"}
-  JUSTYOU_AUTHORITY_KIND: {type: str, default: "ed25519", description: "Signature kind"}
+  HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL: {type: str, default: "", description: "Loopback 127.0.0.1 JustYou validator URL"}
+  JUSTYOU_TRUSTED_AUTHORITY_KEY_ID: {type: str, default: "", description: "Operator-pinned Ed25519 verification key identifier"}
+  JUSTYOU_SIGNED_BINDINGS_JSON: {type: str, default: "", description: "Signed JustYou binding JSON; verified against host-pinned authority public key"}
   HERMES_UNLIMITED_COMFYUI_URL: {type: str, default: "", description: "Optional creative backend URL, reserved for future release"}

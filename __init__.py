@@ -61,9 +61,11 @@ def _modules():
 
 def register(ctx):
     def scoped_secret(name, default=""):
-        # Only the JustYou session credential is a secret. Other values live in
-        # the native Hermes plugin settings (config.yaml), scoped by plugin id.
-        if name == "HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN":
+        # The identity token and the operator-pinned trust root are host-owned.
+        # Signed binding documents are untrusted plugin settings; they cannot
+        # mint a new authority because the trusted Ed25519 key comes from host secrets.
+        if name in ("HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN",
+                    "HERMES_UNLIMITED_JUSTYOU_AUTHORITY_PUBLIC_KEY"):
             from agent.secret_scope import get_secret
             return get_secret(name, default)
         getter = getattr(ctx, "get_config", None)

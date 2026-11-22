@@ -68,7 +68,7 @@ The original [NousResearch Hermes Agent catalog entry #153503](https://github.co
 
 ## Versioned release contract
 
-The canonical public manifest and `VERSION` must match. This source declares **0.2.0-beta.6** with seventeen native Hermes tools as an experimental prerelease; the release tag is published only after exact-commit qualification. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
+The canonical public manifest and `VERSION` must match. This source declares **0.2.0-beta.8** with seventeen native Hermes tools as an experimental prerelease; the release tag is published only after exact-commit qualification. Previous experimental alpha.6–alpha.8 snapshots do not establish a stable 1.0 release. Private development is not a public release. Do not publish a GitHub release or request a Hermes catalog SHA bump until the exact candidate commit passes local tests, Hermes plugin validation/security scanning and an actual-host compatibility check; review the declared tools and external effects. The upstream catalog pin moves only through a separate reviewed NousResearch PR. npm is not used for the Python-native plugin; a separately maintained JavaScript/TypeScript client may be npm-packaged if introduced later.
 
 ## What works
 
@@ -203,20 +203,29 @@ This is the **product direction**, not a statement that every capability above i
 
 ## Native tools
 
+All seventeen tools declared in `plugin.yaml`:
+
 - `hermes_unlimited_status`
 - `unlimited_company_create`
 - `unlimited_company_list`
-- `unlimited_service_dispatch`
-- `unlimited_service_result`
 - `unlimited_service_publish`
 - `unlimited_service_request`
+- `unlimited_service_dispatch`
+- `unlimited_service_result`
 - `unlimited_company_task`
 - `unlimited_company_result`
 - `unlimited_a2ui_surface`
+- `unlimited_oversight_record`
+- `unlimited_oversight_costs`
+- `unlimited_oversight_report`
+- `unlimited_adapter_discover`
+- `unlimited_memory_recall`
+- `unlimited_specialist_factory`
+- `unlimited_economic_evaluate`
 
 ## Trusted profile setup
 
-The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_session_store`, `ctx.justyou_resolver`) or connects to a JustYou service through a loopback-only session validator and Ed25519-signed profile binding cache. It fails closed if either verification is unavailable. The required secret is `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN`, supplied through the host-scoped Hermes secret store. Configure the remaining non-secret values through the native Hermes plugin config:
+The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_session_store`, `ctx.justyou_resolver`) or connects to a JustYou service through a strict `127.0.0.1`-only loopback session validator and Ed25519-signed profile bindings verified against a host-pinned public key. It fails closed if either verification is unavailable. The required host-scoped secrets are `HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN` (and `HERMES_UNLIMITED_JUSTYOU_AUTHORITY_PUBLIC_KEY` when not using host injection), supplied through the host-scoped Hermes secret store. Configure the remaining non-secret values through the native Hermes plugin config:
 
 - `HERMES_UNLIMITED_PROVIDER_ID`
 - `HERMES_UNLIMITED_TENANT_ID`
@@ -224,15 +233,14 @@ The plugin accepts trusted JustYou objects injected by Hermes (`ctx.justyou_sess
 - `HERMES_UNLIMITED_REGISTRY_DB`
 - Optional `HERMES_UNLIMITED_HERMES_CLI`
 
-Without host injection, configure these additional non-secret plugin settings:
+Without host injection, configure these additional profile settings:
 
-- `HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL` (`http://127.0.0.1:<port>` only)
-- `JUSTYOU_BINDINGS_FILE` (private, signed JustYou binding export)
-- `JUSTYOU_AUTHORITY_KEY_ID`
-- `JUSTYOU_AUTHORITY_KEY_FILE` (private, public verification key for Ed25519)
-- Optional `JUSTYOU_AUTHORITY_KIND` (defaults to `ed25519`; other values are rejected)
+- `HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL` (`http://127.0.0.1:<port>` only; `localhost` and remote hosts are rejected)
+- `HERMES_UNLIMITED_JUSTYOU_AUTHORITY_PUBLIC_KEY` (host-scoped secret store: operator-pinned Ed25519 public verification key)
+- `JUSTYOU_TRUSTED_AUTHORITY_KEY_ID` (operator-pinned Ed25519 verification key identifier)
+- `JUSTYOU_SIGNED_BINDINGS_JSON` (signed JustYou binding document JSON; verified against the host-pinned authority public key; plugin-controlled filesystem key/binding paths are never read by the plugin fallback)
 
-The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; the plugin does not import an undeclared `protocol.authoritative_binding` package. `cryptography>=41,<47` is declared in `plugin.yaml`. A bindings JSON file is a cache, not authority; every binding and version announcement is signature-verified, and every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
+The Ed25519 binding verification implementation is included in `unlimited/authoritative_binding.py`; the plugin does not import an undeclared `protocol.authoritative_binding` package. `cryptography>=41,<51` is declared in `plugin.yaml`. A bindings JSON document is untrusted data, not authority; every binding and version announcement is signature-verified, and every operation revalidates the active session. No private keys, signed live identities, or tokens are bundled.
 
 The session token is read from the trusted Hermes profile secret store; a token-file fallback is not implemented. Do not put credentials, customer data or keys in the plugin repository.
 
@@ -253,7 +261,7 @@ Do not set the board to `default` or reuse a board across customers. Missing boa
 
 ```bash
 python3 -m unittest discover -s tests -v
-hermes plugins validate . --install-deps
+hermes plugins doctor . --ci
 ```
 
 Local green tests remain canonical. Public GitHub Actions independently run
@@ -263,8 +271,8 @@ customer effects, or production readiness. Dependabot checks action updates.
 
 ## Installation and execution disclosures (catalog rule 13)
 
-- **Network:** The ten registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in alpha.4.
-- **Local files and persistence:** Provider, company, service and customer-request metadata are stored in the configured SQLite registry. The JustYou verifier may read a signed binding export and public verification-key file from explicitly configured paths, never by scanning arbitrary files.
+- **Network:** The seventeen registered core tools do not send mandatory telemetry or invoke ComfyUI. Hermes workers can contact model providers selected and paid for by the host. Optional ComfyUI client code exists but is not registered in beta.8.
+- **Local files and persistence:** Provider, company, service, request, and audited oversight metadata are stored in the configured SQLite registry. The plugin does not read arbitrary key or binding files from the filesystem; host-injected resolvers or Ed25519-signed binding JSON verified against a host-pinned public key are required.
 - **Shell and background work:** The plugin invokes the local `hermes kanban` CLI to create and read worker tasks on an explicitly provisioned tenant board. Hermes, not the plugin, owns scheduling and workers. No additional privileged daemon, unattended shell job or self-updater is installed.
 - **Secrets:** Identity, tenant and authority are resolved from host/profile scope; no API credentials, private keys or bearer tokens ship with the repository. Secrets remain in the host's configured stores.
 - **Approvals:** No auto-approval, disabling of Hermes guards or core override. Missing authorization fails closed. The plugin may submit work only after trusted JustYou verification.

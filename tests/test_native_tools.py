@@ -287,6 +287,56 @@ class ToolIntegrationTests(unittest.TestCase):
         self.assertNotIn("unlimited_creative_render", self.ctx.handlers)
         self.assertNotIn("unlimited_creative_result", self.ctx.handlers)
 
+    def test_sqlite_integrity_overflow_and_corrupt_db_fail_closed(self):
+        self.assertTrue(self.call("unlimited_company_create",
+                                  {"company_id": "company-a", "display_name": "A"})["created"])
+        dup_co = self.call("unlimited_company_create",
+                           {"company_id": "company-a", "display_name": "Dup"})
+        self.assertEqual(dup_co, {"ok": False, "reason": "IntegrityError"})
+
+        bad_fk = self.call("unlimited_service_publish",
+                           {"company_id": "no-company", "service_id": "svc-a",
+                            "title": "Svc", "price_minor": 100, "currency": "USD"})
+        self.assertEqual(bad_fk, {"ok": False, "reason": "IntegrityError"})
+
+        big_price = self.call("unlimited_service_publish",
+                              {"company_id": "company-a", "service_id": "svc-big",
+                               "title": "Big", "price_minor": 10**25, "currency": "USD"})
+        self.assertEqual(big_price, {"ok": False, "reason": "ValueError"})
+
+        self.assertTrue(self.call("unlimited_service_publish",
+                                  {"company_id": "company-a", "service_id": "svc-a",
+                                   "title": "Svc", "price_minor": 100, "currency": "USD"})["published"])
+        dup_svc = self.call("unlimited_service_publish",
+                            {"company_id": "company-a", "service_id": "svc-a",
+                             "title": "Dup", "price_minor": 100, "currency": "USD"})
+        self.assertEqual(dup_svc, {"ok": False, "reason": "IntegrityError"})
+
+        req1 = self.call("unlimited_service_request",
+                         {"company_id": "company-a", "service_id": "svc-a",
+                          "request_id": "req-1", "payload": {}})
+        self.assertEqual(req1["task_id"], "task-1")
+        dup_req = self.call("unlimited_service_request",
+                            {"company_id": "company-a", "service_id": "svc-a",
+                             "request_id": "req-1", "payload": {}})
+        self.assertEqual(dup_req, {"ok": False, "reason": "IntegrityError"})
+
+        self.assertTrue(self.call("unlimited_oversight_record",
+                                  {"company_id": "company-a", "request_id": "req-1",
+                                   "entry_id": "e-1", "phase": "post_review",
+                                   "minutes": "10", "hourly_rate": "60"})["recorded"])
+        dup_ov = self.call("unlimited_oversight_record",
+                           {"company_id": "company-a", "request_id": "req-1",
+                            "entry_id": "e-1", "phase": "post_review",
+                            "minutes": "10", "hourly_rate": "60"})
+        self.assertEqual(dup_ov, {"ok": False, "reason": "IntegrityError"})
+
+        corrupt_db = pathlib.Path(self.temp.name) / "corrupt.sqlite"
+        corrupt_db.write_bytes(b"NOT A SQLITE DB")
+        self.settings["HERMES_UNLIMITED_REGISTRY_DB"] = str(corrupt_db)
+        corrupt_res = self.call("unlimited_company_list", {})
+        self.assertEqual(corrupt_res, {"ok": False, "reason": "DatabaseError"})
+
 
 if __name__ == "__main__":
     unittest.main()

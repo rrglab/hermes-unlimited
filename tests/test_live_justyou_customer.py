@@ -103,9 +103,9 @@ class LiveCustomerAcceptance(unittest.TestCase):
                     "HERMES_UNLIMITED_JUSTYOU_REGISTRY_URL":
                         f"http://127.0.0.1:{server.server_port}",
                     "HERMES_UNLIMITED_JUSTYOU_SESSION_TOKEN": session.token,
-                    "JUSTYOU_BINDINGS_FILE": str(bindings),
-                    "JUSTYOU_AUTHORITY_KEY_ID": "test-authority",
-                    "JUSTYOU_AUTHORITY_KEY_FILE": str(public_key),
+                    "HERMES_UNLIMITED_JUSTYOU_AUTHORITY_PUBLIC_KEY": signer.public_key_b64(),
+                    "JUSTYOU_TRUSTED_AUTHORITY_KEY_ID": "test-authority",
+                    "JUSTYOU_SIGNED_BINDINGS_JSON": bindings.read_text(encoding="utf-8"),
                     "HERMES_UNLIMITED_REGISTRY_DB": str(state / "companies.db"),
                 }
                 secret = lambda name, default="": settings.get(name, default)
