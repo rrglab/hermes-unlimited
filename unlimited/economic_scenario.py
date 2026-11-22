@@ -31,9 +31,14 @@ def evaluate_cost_scenario(ledger, provider, tenant, company, request, identity,
               "net_value": None, "roi": None, "customer_outcome_verified": False,
               "estimated_cost": report["total_cost"],
               "costs_recorded": report["costs_recorded"]}
-    if not report["costs_recorded"] and Decimal(report["oversight_cost"]) == 0:
-        result.update({"comparison": "INSUFFICIENT_COST_INPUT", "difference": None,
-                       "within_scenario_cap": None})
+    if not report["costs_recorded"]:
+        # Human oversight establishes a *lower bound* only: it may prove an
+        # over-cap situation, but missing AI/recovery costs can never be green.
+        human_cost = Decimal(report["oversight_cost"])
+        result.update({"comparison": "MODEL_INPUT_OVER_CAP" if human_cost > cap
+                       else "INSUFFICIENT_COST_INPUT",
+                       "difference": str(cap - human_cost) if human_cost > cap else None,
+                       "within_scenario_cap": False if human_cost > cap else None})
         return result
     try:
         total = Decimal(report["total_cost"])
